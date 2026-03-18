@@ -42,7 +42,7 @@ eo-common/
 
 ### 构建注入
 
-在 `edgeone-skills` 仓库中运行 `pack.sh`：
+运行 `skills` 目录（本 README.md 的上一级）下的 `pack.sh`：
 
 ```bash
 ./pack.sh                  # 构建所有业务 skill 到 dist/
