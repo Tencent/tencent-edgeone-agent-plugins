@@ -53,6 +53,24 @@ eo-common/
 1. 将业务 skill（`SKILL.md` + 自身 `references/`）拷贝到 `dist/<skill>/`
 2. 将 `eo-common/references/*` 注入到 `dist/<skill>/references/`（不覆盖同名文件）
 
+构建产物示例（以 `eo-acceleration` 为例）：
+
+```
+dist/eo-acceleration/
+├── SKILL.md                             ← 业务 skill 自身入口
+└── references/
+    ├── cert-manager.md                  ← 业务 skill references
+    ├── ... 
+    ├── eo-api-guide.md                  ← eo-common 注入
+    └── eo-api/                          ← eo-common 注入
+        ├── install.md
+        ├── auth.md
+        ├── api-discovery.md
+        └── zone-discovery.md
+```
+
+> 若业务 skill 自身 `references/` 下存在同名文件，则保留业务 skill 版本，不会被 eo-common 覆盖。
+
 ### 用户可配置变量
 
 在 `eo-api-guide.md` 中定义，业务 skill 或用户对话中可覆盖：
@@ -65,9 +83,9 @@ eo-common/
 
 ```
 业务 SKILL.md
-  └─→ references/eo-api-guide.md        ← 工具检查 + 用户配置
+  └─→ references/eo-api-guide.md         ← 工具检查 + 用户配置
         ├─→ eo-api/install.md            ← 按需：tccli 未安装时
-        ├─→ eo-api/auth.md              ← 按需：凭证无效时
+        ├─→ eo-api/auth.md               ← 按需：凭证无效时
         ├─→ eo-api/api-discovery.md      ← 按需：不确定调哪个接口时
         └─→ eo-api/zone-discovery.md     ← 按需：需要 ZoneId 时
 ```
