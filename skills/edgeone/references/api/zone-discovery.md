@@ -5,43 +5,22 @@ EdgeOne 几乎所有 API 操作都需要 **ZoneId**（站点 ID，形如 `zone-2
 
 ## 1. 列出所有站点
 
-```sh
-tccli teo DescribeZones
-```
-
-响应中的 `Zones` 数组包含每个站点的 `ZoneId`、`ZoneName`（站点域名）、`Status`（active / pending / deleted）等信息。
+调用 **DescribeZones**，响应中 `Zones` 数组包含每个站点的 `ZoneId`、`ZoneName`（站点域名）、`Status` 等信息。
 
 ## 2. 按站点名精确查询
 
-当用户已知站点域名时，用 Filters 精确查询：
-
-```sh
-tccli teo DescribeZones \
-  --Filters '[{"Name":"zone-name","Values":["example.com"]}]'
-```
+当用户已知站点域名时，调用 **DescribeZones** 并通过 `Filters`（`zone-name`）精确匹配。
 
 ## 3. 从子域名反查 ZoneId
 
 当用户只提供了子域名（如 `www.example.com`）而不知道 ZoneId 时：
 
-**步骤 A**：先列出所有站点，找到与子域名匹配的根域名（`example.com`）对应的 ZoneId。
-
-**步骤 B**：用 DescribeAccelerationDomains 确认该域名存在于站点下：
-
-```sh
-tccli teo DescribeAccelerationDomains \
-  --ZoneId zone-xxx \
-  --Filters '[{"Name":"domain-name","Values":["www.example.com"]}]'
-```
+1. 先调用 **DescribeZones** 列出所有站点，找到与子域名匹配的根域名对应的 ZoneId
+2. 再调用 **DescribeAccelerationDomains** 并通过 `Filters`（`domain-name`）确认该域名存在于站点下
 
 ## 4. 列出站点下所有域名
 
-```sh
-tccli teo DescribeAccelerationDomains \
-  --ZoneId zone-xxx
-```
-
-> **提示**：分页参数 `--Limit 100`（最大 200）+ `--Offset` 处理多页结果。
+调用 **DescribeAccelerationDomains** 并传入 `ZoneId`。注意使用分页参数处理多页结果。
 
 ## 5. ZoneId 缓存建议
 

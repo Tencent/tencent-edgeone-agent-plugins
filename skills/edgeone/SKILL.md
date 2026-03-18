@@ -18,7 +18,7 @@ EdgeOne 综合 skill，通过下方决策树定位合适的模块，再加载对
 ### 首次调用前：环境检查
 
 1. **阅读** [references/api/README.md](references/api/README.md) 了解调用规范
-2. **执行** `tccli teo DescribeZones` 验证工具与凭证
+2. **执行** `tccli cvm DescribeRegions` 验证工具与凭证
 3. 根据结果按 `references/api/README.md` 中的指引处理异常
 
 ### 每次调用前：查文档确认参数
