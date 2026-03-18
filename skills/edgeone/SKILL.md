@@ -26,6 +26,9 @@ EdgeOne 综合 skill，通过下方决策树定位合适的模块，再加载对
 > ⚠️ **严禁凭记忆猜测参数**。调用任何 API 前（验证可用性的 `DescribeZones` 除外），
 > 必须先通过 [references/api/api-discovery.md](references/api/api-discovery.md) 中的方式
 > 查阅接口文档，确认接口名称、必填参数和数据结构。
+>
+> 🚫 **禁止**使用 `tccli teo <Action> help` 查询参数，
+> 必须通过 cloudcache 接口文档获取准确信息。
 
 ## 快速决策树
 
