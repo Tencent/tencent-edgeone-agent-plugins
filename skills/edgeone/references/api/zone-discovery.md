@@ -6,7 +6,7 @@ EdgeOne 几乎所有 API 操作都需要 **ZoneId**（站点 ID，形如 `zone-2
 ## 1. 列出所有站点
 
 ```sh
-tccli teo DescribeZones --region ${REGION}
+tccli teo DescribeZones
 ```
 
 响应中的 `Zones` 数组包含每个站点的 `ZoneId`、`ZoneName`（站点域名）、`Status`（active / pending / deleted）等信息。
@@ -16,7 +16,7 @@ tccli teo DescribeZones --region ${REGION}
 当用户已知站点域名时，用 Filters 精确查询：
 
 ```sh
-tccli teo DescribeZones --region ${REGION} \
+tccli teo DescribeZones \
   --Filters '[{"Name":"zone-name","Values":["example.com"]}]'
 ```
 
@@ -29,7 +29,7 @@ tccli teo DescribeZones --region ${REGION} \
 **步骤 B**：用 DescribeAccelerationDomains 确认该域名存在于站点下：
 
 ```sh
-tccli teo DescribeAccelerationDomains --region ${REGION} \
+tccli teo DescribeAccelerationDomains \
   --ZoneId zone-xxx \
   --Filters '[{"Name":"domain-name","Values":["www.example.com"]}]'
 ```
@@ -37,7 +37,7 @@ tccli teo DescribeAccelerationDomains --region ${REGION} \
 ## 4. 列出站点下所有域名
 
 ```sh
-tccli teo DescribeAccelerationDomains --region ${REGION} \
+tccli teo DescribeAccelerationDomains \
   --ZoneId zone-xxx
 ```
 

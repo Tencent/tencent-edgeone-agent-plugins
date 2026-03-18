@@ -44,7 +44,7 @@ curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/model/Task.md
 
 ## 调用规范
 
-- **调用形式**：`tccli teo <Action> [--param value ...] --region ${REGION}`
-- **region**：使用 [README.md](README.md) 用户配置中的 `${REGION}` 值
+- **调用形式**：`tccli teo <Action> [--param value ...]`
+- **Region**：默认不带 `--region`；若用户明确指定了地域则加上 `--region <region>`
 - **参数格式**：非简单类型必须为标准 JSON，例如：`--Targets '[{"Type":"url","Value":"https://www.example.com/a.txt"}]'`
 - **串行调用**：tccli 并行调用存在配置文件竞争问题，请逐个调用
