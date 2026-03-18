@@ -9,7 +9,7 @@ EdgeOne API 通过 **tccli**（腾讯云命令行工具）调用。
 | **pipx** | 所有平台，自动隔离环境 | Python 3.8+ |
 | **Homebrew** | macOS | 无需 Python |
 
-- macOS 且已有 Homebrew → 可直接走 Homebrew 路线，跳到 [步骤 3](#3-安装-tccli)
+- macOS 且已有 Homebrew → 可直接走 Homebrew 路线，跳到 [步骤 4](#4-安装-tccli)
 - 其他情况 → 走 pipx 路线，继续步骤 2
 
 ## 2. 确保 Python 环境（pipx 路线）
@@ -77,3 +77,7 @@ brew install tccli
 ```sh
 tccli --version
 ```
+
+## 下一步
+
+安装完成后，请阅读 [auth.md](auth.md) 配置凭证。

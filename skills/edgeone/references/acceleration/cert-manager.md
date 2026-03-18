@@ -6,13 +6,14 @@
 
 | Action | 说明 |
 |---|---|
-| DescribeDefaultCertificates | 查询站点下的证书列表（含状态、过期时间） |
-| ApplyFreeCertificate | 申请免费证书（CNAME 接入模式） |
+| DescribeDefaultCertificates | 查询站点下的证书列表 |
+| ApplyFreeCertificate | 申请免费证书 |
 | CheckFreeCertificateVerification | 检查免费证书申请是否通过 |
-| ModifyHostsCertificate | 为域名部署证书（免费 / 自有 / 关闭） |
+| ModifyHostsCertificate | 为域名部署证书 |
+| DescribeZones | 查询站点列表与接入模式 |
 
 > **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 `tccli teo <Action> help` 查询完整参数和响应说明。
+> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
 
 ## 场景 A：查询证书状态
 
@@ -33,16 +34,14 @@
 
 | 接入模式 | 免费证书申请方式 |
 |---|---|
-| NS 接入 / DNSPod 托管 | **自动验证**——直接调用 ModifyHostsCertificate，Mode 设为 `eofreecert` |
+| NS 接入 / DNSPod 托管 | **自动验证**——直接调用 ModifyHostsCertificate |
 | CNAME 接入 | **手动验证**——需先 ApplyFreeCertificate，完成验证后再部署 |
 
-> 如何判断接入模式：DescribeZones 响应中 `Type` 字段——
-> `full`（NS 接入）、`partial`（CNAME 接入）、
-> `dnsPodAccess`（DNSPod 托管）。
+> 调用 DescribeZones 查询接入模式，根据响应判断走哪条路线。
 
 ### B1：NS 接入 / DNSPod 托管（自动验证）
 
-调用 `ModifyHostsCertificate`，Mode 设为 `eofreecert`。
+调用 `ModifyHostsCertificate`。
 
 > ⚠️ **确认提示**：部署证书会影响域名的 HTTPS 服务，
 > 执行前需向用户确认。
@@ -51,13 +50,9 @@
 
 需要 4 步：
 
-**步骤 1**：调用 `ApplyFreeCertificate` 发起申请，
-传入站点 ID、目标域名和验证方式（`dns_challenge` 或 `http_challenge`）。
+**步骤 1**：调用 `ApplyFreeCertificate` 发起申请。
 
-**步骤 2**：根据响应中的验证信息，告知用户完成配置
-
-- `dns_challenge`：用户需在 DNS 添加响应中返回的 TXT 记录
-- `http_challenge`：用户需在源站放置响应中返回的验证文件
+**步骤 2**：根据响应中的验证信息，告知用户完成配置。
 
 > 告知用户后**等待用户确认已完成配置**，再继续下一步。
 
@@ -66,8 +61,7 @@
 - 成功：响应中包含证书信息，说明证书已签发
 - 失败：需检查验证配置是否正确
 
-**步骤 4**：调用 `ModifyHostsCertificate` 部署免费证书，
-Mode 设为 `eofreecert_manual`。
+**步骤 4**：调用 `ModifyHostsCertificate` 部署免费证书。
 
 > ⚠️ **确认提示**：部署证书会影响域名的 HTTPS 服务，
 > 执行前需向用户确认。
@@ -79,8 +73,7 @@ Mode 设为 `eofreecert_manual`。
 用户需先将证书上传至
 [SSL 证书控制台](https://console.cloud.tencent.com/ssl)，获取 CertId。
 
-调用 `ModifyHostsCertificate`，Mode 设为 `sslcert`，
-在 ServerCertInfo 中传入 CertId。
+调用 `ModifyHostsCertificate`，传入证书 ID。
 
 > ⚠️ **确认提示**：部署证书会影响域名的 HTTPS 服务，
 > 执行前需向用户确认。

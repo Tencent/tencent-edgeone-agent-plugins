@@ -36,3 +36,11 @@ tccli auth login
 凭证文件说明：
 - 默认账户凭证保存在 `default.credential`
 - 指定账户凭证保存在 `<profile名>.credential`（如 `user1.credential`）
+
+---
+
+## 安全提醒
+
+> 🚫 **不建议**使用 `tccli configure` 手动填写 SecretId / SecretKey。
+> 手动配置的密钥以明文存储在本地，存在泄露风险。
+> 请始终使用 `tccli auth login` 浏览器授权方式。

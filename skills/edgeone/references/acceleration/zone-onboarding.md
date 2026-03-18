@@ -15,12 +15,14 @@
 | CreateOriginGroup | 创建源站组（多源站 / 负载均衡场景） |
 | CreateAccelerationDomain | 在站点下添加加速域名并配置源站 |
 | ModifyHostsCertificate | 为域名部署证书（免费 / 自有） |
+| DescribeAccelerationDomains | 查询站点下的加速域名列表 |
+| DescribeZones | 查询站点列表与接入状态 |
 
 > 证书的完整 API（DescribeDefaultCertificates / ApplyFreeCertificate /
 > CheckFreeCertificateVerification 等）参考 [cert-manager.md](cert-manager.md)。
 
 > **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 `tccli teo <Action> help` 查询完整参数和响应说明。
+> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
 
 ## 端到端流程总览
 
