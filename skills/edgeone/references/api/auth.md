@@ -31,6 +31,8 @@ tccli auth login
 1. 先执行 `tccli cvm DescribeRegions`。
 2. 若返回**合理的成功结果**，视为已登录，可直接继续后续操作。
 3. 若返回错误或无法执行，则必须先执行 `tccli auth login`。
+4. 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令（尤其是 `tccli configure list`）。
+
 
 > ⚠️ Agent 不得仅凭用户口头说明或本机可能残留的凭证文件，就假设 TCCLI 已可用。
 
