@@ -3,6 +3,15 @@
 EdgeOne 几乎所有 API 操作都需要 **ZoneId**（站点 ID，形如 `zone-2noz78a8ev6k`）。
 以下是发现 ZoneId 及反查域名的标准流程。
 
+## 涉及 API
+
+| Action | 说明 | 接口文档 |
+|---|---|---|
+| DescribeZones | 查询站点列表 | `curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/action/DescribeZones.md` |
+| DescribeAccelerationDomains | 查询加速域名列表 | `curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/action/DescribeAccelerationDomains.md` |
+
+调用前先查阅上方接口文档，获取 Filters、分页等参数的准确用法。
+
 ## 1. 列出所有站点
 
 调用 **DescribeZones**，响应中 `Zones` 数组包含每个站点的 `ZoneId`、`ZoneName`（站点域名）、`Status` 等信息。
