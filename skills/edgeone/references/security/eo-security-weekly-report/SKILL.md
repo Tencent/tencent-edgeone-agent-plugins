@@ -23,7 +23,7 @@ description: Skill to generate EdgeOne security weekly reports and current secur
 ### 认证与 CLI 前置动作
 
 1. 所有腾讯云 API 调用统一通过 `tccli` 执行。
-2. 如果环境中尚未配置可用凭证，必须先引导用户执行 [auth.md](../../api/auth.md) 中说明的登录方式：
+2. 如果环境中尚未配置可用凭证，必须先引导用户执行 [auth.md](../../../reference/api/auth.md) 中说明的登录方式：
 
 ```sh
 tccli auth login
@@ -46,7 +46,7 @@ tccli auth login
 
 优先确认当前环境中的 `tccli` 是否已登录且可用。
 
-如果当前环境尚未登录或调用失败提示凭证不可用，先引导用户完成 [auth.md](../../api/auth.md) 中的浏览器授权登录，再继续后续步骤。
+如果当前环境尚未登录或调用失败提示凭证不可用，先引导用户完成 [auth.md](../../../reference/api/auth.md) 中的浏览器授权登录，再继续后续步骤。
 
 ### 2. 确认范围
 
@@ -61,7 +61,7 @@ tccli auth login
 
 ### 3. 查询接口文档（按需）
 
-如果对 `teo` 相关接口的参数、字段、数据结构或返回含义不确定，应按照 [ref.md](../../api/ref.md) 中的方法先检索文档，再执行 API 调用，不要臆测字段含义。
+如果对 `teo` 相关接口的参数、字段、数据结构或返回含义不确定，应按照 [ref.md](../../../reference/api/ref.md) 中的方法先检索文档，再执行 API 调用，不要臆测字段含义。
 
 典型检索方式包括：
 
@@ -83,7 +83,7 @@ tccli teo DescribeSecurityIPGroup --ZoneId <ZoneId>
 
 - 先说明失败原因
 - 如果是参数不完整，先执行 `tccli teo <Action> help` 获取该接口所需参数；如果返回信息仍不够清晰，再执行 `tccli teo <Action> help --detail` 获取详细说明
-- 如果仍有疑问，再根据 [ref.md](../../api/ref.md) 的方法查询对应接口文档
+- 如果仍有疑问，再根据 [ref.md](../../../reference/api/ref.md) 的方法查询对应接口文档
 - 补充必要参数后重新调用
 
 ### 5. 生成结论与快照
