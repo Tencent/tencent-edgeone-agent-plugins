@@ -2,16 +2,6 @@
 
 管理 EdgeOne 域名的 HTTPS 证书：查询证书状态、申请免费证书、部署自有证书。
 
-## 涉及 API
-
-| Action | 说明 |
-|---|---|
-| DescribeDefaultCertificates | 查询站点下的证书列表 |
-| ApplyFreeCertificate | 申请免费证书 |
-| CheckFreeCertificateVerification | 检查免费证书申请是否通过 |
-| ModifyHostsCertificate | 为域名部署证书 |
-| DescribeZones | 查询站点列表与接入模式 |
-
 ## 场景 A：查询证书状态
 
 **触发**：用户想查看证书列表、检查过期时间。
