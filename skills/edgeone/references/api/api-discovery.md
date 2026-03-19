@@ -55,11 +55,3 @@ curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/practice/practice
 ```
 
 ---
-
-## 调用规范
-
-- 🚫 **禁止**使用 `tccli teo <Action> help` 查询参数——`help` 输出不完整且缺少数据结构详情，必须通过上方 cloudcache 接口文档获取准确信息
-- **调用形式**：`tccli teo <Action> [--param value ...]`
-- **Region**：默认不带 `--region`；若用户明确指定了地域则加上 `--region <region>`
-- **参数格式**：非简单类型必须为标准 JSON，例如：`--Targets '[{"Type":"url","Value":"https://www.example.com/a.txt"}]'`
-- **串行调用**：tccli 并行调用存在配置文件竞争问题，请逐个调用
