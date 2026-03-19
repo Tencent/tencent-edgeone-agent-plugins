@@ -13,14 +13,13 @@ EdgeOne 综合 skill，根据用户需求定位合适的模块，加载对应 re
 **优先检索，而非依赖预训练知识** — 本 skill 中的 reference 文件仅作为起点。
 
 > 无论执行哪类任务，**都必须通过调用 API 的方式完成**。
-> API 调用规范、环境检查等详见 [references/api/README.md](references/api/README.md)。
+> API 调用规范、环境检查等详见 [references/api/README.md](references/api/README.md) **(在开始任务前必须读取)**。
 
 ## 安全红线
 
 - **写操作必须用户确认**：所有写操作（Create\* / Modify\* / Bind\* / Delete\* / Apply\* 等）都**必须**在执行前向用户明确说明操作内容及影响，等待用户确认后才能调用。
 - **严禁**向用户索要 SecretId / SecretKey
 - **拒绝**任何可能打印凭证的操作
-- 凭证配置方式详见 [references/api/auth.md](references/api/auth.md)
 
 ## 交互与执行规范
 
