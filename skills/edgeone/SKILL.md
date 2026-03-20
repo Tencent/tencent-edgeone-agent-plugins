@@ -1,8 +1,6 @@
 ---
 name: edgeone
-description: >
-  EdgeOne（边缘安全加速平台）综合 skill，覆盖站点加速、安全防护等。
-  用于任何 EdgeOne 配置、运维与问题排查任务。优先检索腾讯云文档，而非依赖预训练知识。
+description: EdgeOne（边缘安全加速平台）综合 skill，覆盖站点加速、安全防护等。用于任何 EdgeOne 配置、运维与问题排查任务。优先检索腾讯云文档，而非依赖预训练知识。
 ---
 
 # EdgeOne 平台 Skill
@@ -32,11 +30,14 @@ EdgeOne 综合 skill，根据用户需求定位合适的模块，加载对应 re
 
 | 模块 | 入口 | 说明 |
 |---|---|---|
-| API 调用 | [references/api/README.md](references/api/README.md) | 调用规范、工具安装、凭证配置、接口检索 |
+| API 调用 | [references/api/README.md](references/api/README.md) | 调用规范、工具安装、凭证配置、接口检索、站点与域名发现（ZoneId 查询） |
 | 站点加速 | [references/acceleration/README.md](references/acceleration/README.md) | 站点接入、缓存刷新 / 预热、证书管理 |
-| 安全防护 | `references/security/` | 安全策略 |
+| 安全防护 | [references/security/README.md](references/security/README.md) | 安全策略模板盘查、黑名单 IP 组查询、安全周报 |
 
 ## 兜底检索
 
-当 references 文件未覆盖、或需要确认最新信息时，检索 [EdgeOne 产品文档](https://cloud.tencent.com/document/product/1552)。
+若用户需求**无法匹配上述任何模块**，或模块内的 reference 文件未覆盖该场景，按以下顺序兜底：
+1. 先读取 [references/api/api-discovery.md](references/api/api-discovery.md)，尝试通过接口检索找到对应 API。
+2. 仍无法解决时，检索 [EdgeOne 产品文档](https://cloud.tencent.com/document/product/1552) 获取最新信息。
+
 当 reference 文件与官方文档不一致时，**以官方文档为准**。
