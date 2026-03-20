@@ -1,11 +1,11 @@
 ---
 name: eo-security-template-audit
-description: Skill to audit EdgeOne security policy template coverage, identify domains not bound to any security template, and surface potential security gaps.
+description: Skill to audit EdgeOne security policy template coverage, identify domains not bound to any security template, and surface potential security gaps. Use this skill whenever the user asks about security template coverage, wants to check which domains are missing security templates, mentions template binding audits, or asks questions like 'which domains have no security template', 'check template coverage', or 'find unprotected domains'.
 ---
 
 # eo-security-template-audit
 
-盘查 EdgeOne 安全策略模板覆盖范围，找出未绑定模板的域名，识别潜在的安全防护空白。
+盘查 EdgeOne 安全策略模板覆盖范围，输出模板与绑定资源的映射关系，找出未绑定模板的域名，适合安全审计场景。
 
 ## 涉及 API
 
@@ -31,47 +31,53 @@ tccli auth login
 
 2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
 
-## 场景 A：盘查模板覆盖范围
+## 执行流程
 
-**触发**：用户说"哪些域名没有绑安全模板"、"帮我检查模板覆盖情况"、"看看有没有域名漏绑了安全策略"。
+**触发**：用户说"哪些域名没有绑安全模板"、"帮我检查模板覆盖情况"、"看看有没有域名漏绑了安全策略"、"帮我做安全模板审计"、"哪些域名没有安全防护"、"模板绑定情况怎么样"、"帮我盘查一下安全模板"、"有没有域名没绑模板"。
 
-按以下顺序调用 3 个接口：
+按以下顺序调用接口，逐步构建模板-绑定资源映射表：
 
-**第一步**：获取所有安全策略模板列表
+### 第一步：获取所有安全策略模板列表
 
 ```sh
 tccli teo DescribeWebSecurityTemplates --ZoneId <ZoneId>
 ```
 
-**第二步**：逐一获取每个模板的详细配置
+记录每个模板的 `TemplateId` 和 `TemplateName`，作为后续查询的输入。
+
+### 第二步：逐一获取每个模板的详细配置
 
 ```sh
 tccli teo DescribeWebSecurityTemplate --ZoneId <ZoneId> --TemplateId <TemplateId>
 ```
 
-**第三步**：查询每个模板的域名绑定关系
+关注以下字段，用于后续状态标注：
+- 模板是否启用（整体开关状态）
+- 各防护模块（WAF、CC、Bot 等）是否有规则配置
+
+### 第三步：查询每个模板的域名绑定关系
 
 ```sh
 tccli teo DescribeSecurityTemplateBindings --ZoneId <ZoneId> --TemplateId <TemplateId>
 ```
 
-将绑定关系与站点域名列表交叉比对，得出未覆盖域名清单。
+收集每个模板绑定的域名列表，汇总为全局的"已覆盖域名集合"。
 
-> ⚠️ **注意**：如果无法获取站点完整域名列表，应明确说明"当前仅能基于模板绑定关系输出已知覆盖情况，无法确认是否存在遗漏域名"。
+### 第四步：获取站点完整域名列表
 
-## 场景 B：检查模板防护状态异常
+为了识别未覆盖域名，需要获取站点下的完整域名列表：
 
-**触发**：用户说"帮我检查安全模板有没有问题"、"有没有模板防护规则是空的"。
+```sh
+tccli teo DescribeZoneRelatedDomains --ZoneId <ZoneId>
+```
 
-在完成场景 A 的数据采集后，重点标记以下异常：
+> 如果该接口不可用或返回为空，可尝试通过 [api-discovery.md](../api/api-discovery.md) 查找其他获取域名列表的接口（如 `DescribeAccelerationDomains`）。
 
-- 防护规则为空或全部关闭的模板（即使已绑定域名，也属于防护空白）
-- 已创建但未绑定任何域名的空模板
-- 模板中存在过于宽松的放行规则
-- 绑定的模板已被删除或处于异常状态
+### 第五步：交叉比对，识别未覆盖域名
 
-> ⚠️ **注意**：不要凭空判断域名的风险等级，必须结合域名命名、暴露情况等可观测信息给出依据。
-> 本技能只做只读查询，不执行任何绑定或修改操作；如果用户希望补绑模板，应明确告知需要在控制台操作或调用写接口，并提示相应风险。
+将"已覆盖域名集合"（第三步汇总结果）与站点完整域名列表做差集，得出未绑定任何模板的域名清单。
+
+> ⚠️ **注意**：如果无法获取站点完整域名列表，应明确说明"当前仅能基于模板绑定关系输出已知覆盖情况，无法确认是否存在遗漏域名"，不要凭空推断。
 
 ## 输出格式
 
@@ -79,35 +85,37 @@ tccli teo DescribeSecurityTemplateBindings --ZoneId <ZoneId> --TemplateId <Templ
 ## 安全模板覆盖盘查报告
 
 **站点**：example.com（ZoneId: zone-xxx）
-**盘查时间**：2026-03-19
+**盘查时间**：YYYY-MM-DD
 **数据来源**：DescribeWebSecurityTemplates / DescribeWebSecurityTemplate / DescribeSecurityTemplateBindings
 
+### 模板-绑定资源映射表
+
+| 模板名称 | 模板 ID | 绑定域名数 | 绑定域名列表 | 模板状态 |
+|---|---|---|---|---|
+| 生产环境模板 | template-xxx | 3 | a.com, b.com, c.com | ✅ 正常 |
+| 测试环境模板 | template-yyy | 0 | —（未绑定任何域名） | ⚠️ 空模板 |
+
 ### 覆盖摘要
+
 - 当前模板总数：N 个
-- 已绑定域名的模板：N 个 / 空模板：N 个
+- 已绑定域名的模板：N 个 / 空模板（未绑定任何域名）：N 个
 - 已覆盖域名总数：N 个
 - **未覆盖域名总数：N 个**
 
 ### 未覆盖域名清单
 
-🔴 高风险（需立即处理）
-  - example.com
+> 以下域名未绑定任何安全策略模板，存在防护空白：
 
-🟡 中风险（本周内处理）
-  - test.example.com
-  - staging.example.com
+- example.com
+- test.example.com
+- staging.example.com
 
-⚪ 待确认（需人工判断）
-  - internal.example.com
-
-### 模板状态摘要
-
-| 模板名称 | 模板 ID | 绑定域名数 | 防护状态 | 备注 |
-|---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+（如无法获取完整域名列表，此处注明"数据不完整，仅展示已知覆盖情况"）
 
 ### 处理建议
-- 立即处理：高风险未覆盖域名，建议绑定合适的安全模板
-- 本周内处理：中风险未覆盖域名，建议评估后绑定
-- 持续观察：空模板或防护规则异常的模板，建议人工复核
+
+- 未覆盖域名：建议评估后绑定合适的安全模板
+- 空模板：建议确认是否为预留模板，如无用途可考虑清理
 ```
+
+> **只读声明**：本技能仅执行查询操作，不进行任何绑定或修改。如需补绑模板，请在控制台操作或调用相应写接口，操作前请确认影响范围。

@@ -5,7 +5,9 @@ description: Skill to query the security policy of a specified domain in EdgeOne
 
 # eo-domain-blacklist-inspector
 
-查询 EdgeOne 指定域名关联的安全策略，识别哪个 IP 组承担黑名单拦截逻辑，并展示该 IP 组的具体条目。
+查询 EdgeOne 指定域名关联的安全策略，解析策略规则中 `action=block` 的 IP 组引用，输出黑名单 IP 组映射报告。
+
+> **定位说明**：本 Skill 是写操作（如 `eo-ip-threat-blacklist`）的**前置诊断步骤**。在向黑名单 IP 组写入条目之前，应先用本 Skill 查清楚目标黑名单组 ID，避免误操作错误的 IP 组。
 
 ## 涉及 API
 
@@ -32,25 +34,31 @@ tccli auth login
 2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
 3. 用户必须明确提供目标域名（如 `example.com`）；如果用户只说"这个域名"而未给出具体值，需要先追问确认。
 
-## 场景 A：查询域名黑名单 IP 组
+## 执行流程
 
-**触发**：用户说"查一下 example.com 的安全策略里哪个 IP 组是黑名单"、"这个域名的拦截 IP 组是哪个"。
+**触发**：用户说"查一下 example.com 的安全策略里哪个 IP 组是黑名单"、"这个域名的拦截 IP 组是哪个"、"帮我看看 example.com 的 IP 封禁列表"、"我要往黑名单加 IP，先帮我查一下黑名单组"。
 
-按以下顺序调用 3 个接口：
+按以下顺序调用接口，构建黑名单 IP 组映射报告：
 
-**第一步**：获取域名关联的安全策略
+### 第一步：获取域名关联的安全策略
 
 ```sh
 tccli teo DescribeSecurityPolicy --ZoneId <ZoneId> --Entity <域名>
 ```
 
-**第二步**：获取站点下所有 IP 组列表
+从返回结果中提取所有规则，重点关注 **`action=block`（拦截/封禁）** 的规则，记录这些规则引用的 IP 组 ID。
+
+### 第二步：获取站点下所有 IP 组列表
 
 ```sh
 tccli teo DescribeSecurityIPGroup --ZoneId <ZoneId>
 ```
 
-**第三步**：根据前两步结果定位黑名单 IP 组 ID，查询其详细内容
+将第一步中识别出的 IP 组 ID 与此列表对照，补全 IP 组名称等元信息。
+
+### 第三步：查询黑名单 IP 组的详细条目
+
+对第一步中识别出的每个黑名单 IP 组，逐一查询其详细内容：
 
 ```sh
 tccli teo DescribeSecurityIPGroupContent --ZoneId <ZoneId> --GroupId <GroupId>
@@ -58,28 +66,15 @@ tccli teo DescribeSecurityIPGroupContent --ZoneId <ZoneId> --GroupId <GroupId>
 
 ### 黑名单 IP 组识别规则
 
-满足以下任一条件的 IP 组，标记为**承担黑名单拦截逻辑**：
+**以规则动作为主要判断依据**：
 
-- 被安全策略中动作为"拦截/封禁（Block）"的规则直接引用
-- IP 组名称包含 `blacklist`、`blocklist`、`deny`、`黑名单`、`封禁` 等语义关键词，且被任意拦截规则引用
+- **确认为黑名单组**：被安全策略中 `action=block` 的规则直接引用的 IP 组
+- **辅助参考**：IP 组名称包含 `blacklist`、`blocklist`、`deny`、`黑名单`、`封禁` 等语义关键词，可作为辅助说明，但不能作为唯一判断依据
 
-> ⚠️ **注意**：不要仅凭 IP 组名称判断，必须结合安全策略中的规则动作进行确认。
-> 如果存在多个 IP 组均满足条件，应全部列出并说明各自对应的规则上下文。
-> 如果无法明确判断，如实说明并列出所有被拦截规则引用的 IP 组供用户人工确认。
-
-## 场景 B：检查 IP 组内容异常
-
-**触发**：用户说"帮我看看 example.com 的 IP 封禁列表"、"检查一下黑名单 IP 组有没有问题"。
-
-在完成场景 A 的数据采集后，重点标记以下异常：
-
-- IP 组为空（黑名单规则生效但无任何条目）
-- 存在过于宽泛的 CIDR（如 `0.0.0.0/0`、`10.0.0.0/8`）
-- 测试用 IP 组长期生效
-- 多个 IP 组同时承担拦截逻辑但职责不清晰
-
-> ⚠️ **注意**：本技能只做只读查询，不执行任何 IP 组修改或策略变更操作。
-> 如果用户希望修改黑名单，应明确告知需要在控制台操作或调用写接口，并提示相应风险。
+> ⚠️ **注意**：
+> - 不要仅凭 IP 组名称判断，必须结合安全策略中的规则动作进行确认。
+> - 如果存在多个 IP 组均被 `action=block` 规则引用，应全部列出并说明各自对应的规则上下文。
+> - 如果无法明确判断，如实说明并列出所有被拦截规则引用的 IP 组供用户人工确认。
 
 ## 输出格式
 
@@ -87,22 +82,27 @@ tccli teo DescribeSecurityIPGroupContent --ZoneId <ZoneId> --GroupId <GroupId>
 ## 黑名单 IP 组查询结果
 
 **域名**：example.com（ZoneId: zone-xxx）
-**查询时间**：2026-03-19
+**查询时间**：YYYY-MM-DD
 **数据来源**：DescribeSecurityPolicy / DescribeSecurityIPGroup / DescribeSecurityIPGroupContent
 
-### 结论
-域名 example.com 的安全策略中，承担黑名单拦截逻辑的 IP 组为：
+### 黑名单 IP 组（action=block 规则引用）
 
-- IP 组名称：blacklist-prod
-- IP 组 ID：ipg-xxxxxxxx
-- 关联规则：规则 ID xxx，动作：Block，触发条件：来源 IP 命中 IP 组
+> 以下 IP 组被安全策略中的拦截规则直接引用，是本域名的黑名单 IP 组：
 
-### IP 组详细内容
+| IP 组名称 | **IP 组 ID** | 条目数 | 关联规则 ID | 规则动作 |
+|---|---|---|---|---|
+| blacklist-prod | **ipg-xxxxxxxx** | 42 | rule-001 | Block |
+
+> 如需向上述 IP 组写入条目，请使用 IP 组 ID：`ipg-xxxxxxxx`
+
+### IP 组详细条目
+
+**blacklist-prod**（ipg-xxxxxxxx）
 
 | 序号 | IP / CIDR | 备注 |
 |---|---|---|
 | 1 | 1.2.3.4 | ... |
-| 2 | 10.0.0.0/8 | ... |
+| 2 | 5.6.7.8/24 | ... |
 
 > 如果条目超过 20 条，展示前 20 条并注明"共 N 条，仅展示前 20 条"。
 
@@ -110,9 +110,12 @@ tccli teo DescribeSecurityIPGroupContent --ZoneId <ZoneId> --GroupId <GroupId>
 
 | 规则 ID | 规则名称 | 动作 | 引用 IP 组 | 备注 |
 |---|---|---|---|---|
-| ... | ... | ... | ... | ... |
+| rule-001 | 黑名单拦截 | Block | blacklist-prod | ... |
 
 ### 补充说明（如有）
-- 异常条目说明（如过于宽泛的 CIDR、空组等）
+
+- 异常条目说明（如 IP 组为空、存在过于宽泛的 CIDR 如 `0.0.0.0/0` 等）
 - 其他值得关注的拦截规则
 ```
+
+> **只读声明**：本技能仅执行查询操作，不进行任何 IP 组修改或策略变更。如需修改黑名单，请在控制台操作或调用相应写接口，操作前请确认影响范围。
