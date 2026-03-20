@@ -1,0 +1,15 @@
+{
+    "$schema": "https://code.claude.com/schemas/marketplace.json",
+    "name": "edgeone",
+    "owner": {
+        "name": "Tencent EdgeOne",
+        "url": "https://edgeone.ai"
+    },
+    "plugins": [
+        {
+            "name": "edgeone",
+            "source": "./",
+            "description": "Skills for the Tencent EdgeOne platform"
+        }
+    ]
+}
