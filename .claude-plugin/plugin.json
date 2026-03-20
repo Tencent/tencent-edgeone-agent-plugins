@@ -1,0 +1,19 @@
+{
+  "name": "edgeone-agent-plugins",
+  "version": "1.0.0",
+  "description": "EdgeOne（边缘安全加速平台）综合插件，覆盖站点加速、安全防护等。用于任何 EdgeOne 配置、运维与问题排查任务。",
+  "author": {
+    "name": "EdgeOne Team"
+  },
+  "license": "MIT",
+  "keywords": [
+    "edgeone",
+    "tencent-cloud",
+    "cdn",
+    "security",
+    "acceleration"
+  ],
+  "skills": [
+    "./skills/edgeone"
+  ]
+}
