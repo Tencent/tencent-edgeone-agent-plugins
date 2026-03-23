@@ -9,15 +9,15 @@
 │
 ├─ 「帮我出一份本周的安全防护状态报告」
 │  「查一下现在的安全配置」
-│  └─ → eo-security-weekly-report.md  🟢 低风险 · 顺序采集后优先输出结论，附精简快照
+│  └─ → security-weekly-report.md  🟢 低风险 · 顺序采集后优先输出结论，附精简快照
 │
 ├─ 「哪些域名没有绑安全模板」
 │  「帮我检查模板覆盖情况」
-│  └─ → eo-security-template-audit.md  🟢 低风险 · 列出未绑定域名，提示人工确认
+│  └─ → security-template-audit.md  🟢 低风险 · 列出未绑定域名，提示人工确认
 │
 ├─ 「查一下 example.com 的安全策略里哪个 IP 组是黑名单」
 │  「这个域名的拦截 IP 组是哪个」
-│  └─ → eo-domain-blacklist-inspector.md  🟢 低风险 · 只读查询，识别黑名单 IP 组
+│  └─ → domain-blacklist-inspector.md  🟢 低风险 · 只读查询，识别黑名单 IP 组
 │
 └─ 不确定该调哪个 API
    └─ → ../api/api-discovery.md
@@ -34,9 +34,9 @@
 
 | 文件 | 风险等级 | 核心触发场景 |
 |---|---|---|
-| [eo-security-weekly-report.md](eo-security-weekly-report.md) | 🟢 低风险 | 定期生成安全防护配置快照，感知策略是否出现异常变更 |
-| [eo-security-template-audit.md](eo-security-template-audit.md) | 🟢 低风险 | 盘查安全策略模板覆盖范围，找出未绑定模板的域名 |
-| [eo-domain-blacklist-inspector.md](eo-domain-blacklist-inspector.md) | 🟢 低风险 | 查询指定域名关联的安全策略，识别承担黑名单拦截逻辑的 IP 组 |
+| [security-weekly-report.md](security-weekly-report) | 🟢 低风险 | 定期生成安全防护配置快照，感知策略是否出现异常变更 |
+| [security-template-audit.md](security-template-audit) | 🟢 低风险 | 盘查安全策略模板覆盖范围，找出未绑定模板的域名 |
+| [domain-blacklist-inspector.md](domain-blacklist-inspector) | 🟢 低风险 | 查询指定域名关联的安全策略，识别承担黑名单拦截逻辑的 IP 组 |
 
 ## 参考链接
 
