@@ -1,6 +1,6 @@
 ---
 name: edgeone
-description: EdgeOne（边缘安全加速平台）综合 skill，覆盖站点加速、安全防护等。用于任何 EdgeOne 配置、运维与问题排查任务。优先检索腾讯云文档，而非依赖预训练知识。
+description: 腾讯云 EdgeOne（边缘安全加速平台）综合 skill，覆盖边缘加速（DNS、证书、缓存、规则引擎、四层代理、负载均衡）、边缘安全（DDoS 防护、Web 防护、Bot 管理）、边缘媒体（视频 / 图片即时处理）、边缘开发（边缘函数、EdgeOne Pages）等平台能力。当用户提到 EdgeOne / EO 相关的任何配置、运维、查询或排障需求时使用此 skill。
 ---
 
 # EdgeOne 平台 Skill
