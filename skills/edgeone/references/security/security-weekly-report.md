@@ -1,9 +1,4 @@
----
-name: eo-security-weekly-report
-description: Skill to generate EdgeOne security weekly reports and current security configuration snapshots, and detect suspicious policy changes.
----
-
-# eo-security-weekly-report
+# security-weekly-report
 
 管理 EdgeOne 站点的安全防护状态：生成配置快照、感知策略异常变更、输出安全周报。
 

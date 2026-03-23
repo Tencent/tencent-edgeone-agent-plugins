@@ -1,9 +1,4 @@
----
-name: eo-security-template-audit
-description: Skill to audit EdgeOne security policy template coverage, identify domains not bound to any security template, and surface potential security gaps. Use this skill whenever the user asks about security template coverage, wants to check which domains are missing security templates, mentions template binding audits, or asks questions like 'which domains have no security template', 'check template coverage', or 'find unprotected domains'.
----
-
-# eo-security-template-audit
+# security-template-audit
 
 盘查 EdgeOne 安全策略模板覆盖范围，输出模板与绑定资源的映射关系，找出未绑定模板的域名，适合安全审计场景。
 

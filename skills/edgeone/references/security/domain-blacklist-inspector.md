@@ -1,9 +1,4 @@
----
-name: eo-domain-blacklist-inspector
-description: Skill to query the security policy of a specified domain in EdgeOne, identify which IP group is responsible for blacklist blocking logic, and surface the IP entries within that group.
----
-
-# eo-domain-blacklist-inspector
+# domain-blacklist-inspector
 
 查询 EdgeOne 指定域名关联的安全策略，解析策略规则中 `action=block` 的 IP 组引用，输出黑名单 IP 组映射报告。
 
