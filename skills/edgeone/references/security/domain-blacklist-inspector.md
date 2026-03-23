@@ -22,14 +22,7 @@ description: Skill to query the security policy of a specified domain in EdgeOne
 
 ## 前置条件
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行。如果环境中尚未配置可用凭证，必须先引导用户完成登录：
-
-```sh
-tccli auth login
-```
-
-> 执行后终端会打印授权链接，在用户完成浏览器授权前保持阻塞，授权成功后命令自动结束。
-> 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令。
+1. 所有腾讯云 API 调用统一通过 `tccli` 执行，执行前请确认已完成登录鉴权。
 
 2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
 3. 用户必须明确提供目标域名（如 `example.com`）；如果用户只说"这个域名"而未给出具体值，需要先追问确认。
@@ -42,27 +35,15 @@ tccli auth login
 
 ### 第一步：获取域名关联的安全策略
 
-```sh
-tccli teo DescribeSecurityPolicy --ZoneId <ZoneId> --Entity <域名>
-```
-
-从返回结果中提取所有规则，重点关注 **`action=block`（拦截/封禁）** 的规则，记录这些规则引用的 IP 组 ID。
+调用 `DescribeSecurityPolicy` 接口，从返回结果中提取所有规则，重点关注 **`action=block`（拦截/封禁）** 的规则，记录这些规则引用的 IP 组 ID。
 
 ### 第二步：获取站点下所有 IP 组列表
 
-```sh
-tccli teo DescribeSecurityIPGroup --ZoneId <ZoneId>
-```
-
-将第一步中识别出的 IP 组 ID 与此列表对照，补全 IP 组名称等元信息。
+调用 `DescribeSecurityIPGroup` 接口，将第一步中识别出的 IP 组 ID 与此列表对照，补全 IP 组名称等元信息。
 
 ### 第三步：查询黑名单 IP 组的详细条目
 
-对第一步中识别出的每个黑名单 IP 组，逐一查询其详细内容：
-
-```sh
-tccli teo DescribeSecurityIPGroupContent --ZoneId <ZoneId> --GroupId <GroupId>
-```
+对第一步中识别出的每个黑名单 IP 组，逐一调用 `DescribeSecurityIPGroupContent` 接口查询其详细内容。
 
 ### 黑名单 IP 组识别规则
 

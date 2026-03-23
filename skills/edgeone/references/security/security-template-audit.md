@@ -20,14 +20,7 @@ description: Skill to audit EdgeOne security policy template coverage, identify 
 
 ## 前置条件
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行。如果环境中尚未配置可用凭证，必须先引导用户完成登录：
-
-```sh
-tccli auth login
-```
-
-> 执行后终端会打印授权链接，在用户完成浏览器授权前保持阻塞，授权成功后命令自动结束。
-> 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令。
+1. 所有腾讯云 API 调用统一通过 `tccli` 执行，执行前请确认已完成登录鉴权。
 
 2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
 
@@ -39,37 +32,21 @@ tccli auth login
 
 ### 第一步：获取所有安全策略模板列表
 
-```sh
-tccli teo DescribeWebSecurityTemplates --ZoneId <ZoneId>
-```
-
-记录每个模板的 `TemplateId` 和 `TemplateName`，作为后续查询的输入。
+调用 `DescribeWebSecurityTemplates` 接口，记录每个模板的 `TemplateId` 和 `TemplateName`，作为后续查询的输入。
 
 ### 第二步：逐一获取每个模板的详细配置
 
-```sh
-tccli teo DescribeWebSecurityTemplate --ZoneId <ZoneId> --TemplateId <TemplateId>
-```
-
-关注以下字段，用于后续状态标注：
+调用 `DescribeWebSecurityTemplate` 接口，关注以下字段，用于后续状态标注：
 - 模板是否启用（整体开关状态）
 - 各防护模块（WAF、CC、Bot 等）是否有规则配置
 
 ### 第三步：查询每个模板的域名绑定关系
 
-```sh
-tccli teo DescribeSecurityTemplateBindings --ZoneId <ZoneId> --TemplateId <TemplateId>
-```
-
-收集每个模板绑定的域名列表，汇总为全局的"已覆盖域名集合"。
+调用 `DescribeSecurityTemplateBindings` 接口，收集每个模板绑定的域名列表，汇总为全局的"已覆盖域名集合"。
 
 ### 第四步：获取站点完整域名列表
 
-为了识别未覆盖域名，需要获取站点下的完整域名列表：
-
-```sh
-tccli teo DescribeZoneRelatedDomains --ZoneId <ZoneId>
-```
+为了识别未覆盖域名，需要获取站点下的完整域名列表，调用 `DescribeZoneRelatedDomains` 接口。
 
 > 如果该接口不可用或返回为空，可尝试通过 [api-discovery.md](../api/api-discovery.md) 查找其他获取域名列表的接口（如 `DescribeAccelerationDomains`）。
 

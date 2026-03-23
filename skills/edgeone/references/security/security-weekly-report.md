@@ -35,13 +35,7 @@ tccli auth login
 
 **触发**：用户说"查一下现在的安全配置"、"帮我整理当前站点的安全策略快照"。
 
-围绕同一个 `ZoneId`，顺序调用以下 3 个接口：
-
-```sh
-tccli teo DescribeSecurityPolicy --ZoneId <ZoneId>
-tccli teo DescribeWebSecurityTemplates --ZoneId <ZoneId>
-tccli teo DescribeSecurityIPGroup --ZoneId <ZoneId>
-```
+围绕同一个 `ZoneId`，顺序调用以下 3 个接口：`DescribeSecurityPolicy`、`DescribeWebSecurityTemplates`、`DescribeSecurityIPGroup`。
 
 **输出建议**：以"当前快照 + 风险提示"的方式回答，在结尾附精简 JSON 快照（见附录格式），便于后续周报继续对比。
 
@@ -119,4 +113,3 @@ tccli teo DescribeSecurityIPGroup --ZoneId <ZoneId>
   "webSecurityTemplates": [],
   "securityIPGroups": []
 }
-```
