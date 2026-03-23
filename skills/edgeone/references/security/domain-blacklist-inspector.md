@@ -30,7 +30,7 @@
 
 ### 第一步：获取域名关联的安全策略
 
-调用 `DescribeSecurityPolicy` 接口，从返回结果中提取所有规则，重点关注 **`action=block`（拦截/封禁）** 的规则，记录这些规则引用的 IP 组 ID。
+调用 `DescribeSecurityPolicy` 接口，从返回结果中提取所有规则，识别其中具有**拦截或封禁语义**的规则（例如 `action=block`、`Action.Name=Deny` 等，需根据字段值的实际含义自行判断），记录这些规则引用的 IP 组 ID。
 
 ### 第二步：获取站点下所有 IP 组列表
 
