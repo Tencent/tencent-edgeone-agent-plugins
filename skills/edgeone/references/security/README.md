@@ -19,6 +19,10 @@
 │  「这个域名的拦截 IP 组是哪个」
 │  └─ → domain-blacklist-inspector.md  🟢 低风险 · 只读查询，识别黑名单 IP 组
 │
+├─ 「帮我分析最近的攻击 IP 集中度」
+│  「把这些 IP 拉黑」「IP 封禁」
+│  └─ → ip-threat-blacklist.md  🔴 高风险 · 写操作前强制展示 Diff + 二次确认，只允许写入指定黑名单组
+│
 └─ 不确定该调哪个 API
    └─ → ../api/api-discovery.md
 ```
@@ -37,6 +41,7 @@
 | [security-weekly-report.md](security-weekly-report) | 🟢 低风险 | 定期生成安全防护配置快照，感知策略是否出现异常变更 |
 | [security-template-audit.md](security-template-audit) | 🟢 低风险 | 盘查安全策略模板覆盖范围，找出未绑定模板的域名 |
 | [domain-blacklist-inspector.md](domain-blacklist-inspector) | 🟢 低风险 | 查询指定域名关联的安全策略，识别承担黑名单拦截逻辑的 IP 组 |
+| [ip-threat-blacklist.md](ip-threat-blacklist) | 🔴 高风险 | 分析 7 层高集中度威胁 IP，执行 IP 黑名单拉黑（写操作需二次确认） |
 
 ## 参考链接
 
