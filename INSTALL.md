@@ -18,9 +18,9 @@ git clone https://github.com/user/edgeone-agent-plugins.git ~/.edgeone-skills
 git clone https://github.com/user/edgeone-agent-plugins.git "$env:USERPROFILE\.edgeone-skills"
 ```
 
-### 第二步：创建技能链接
+### 第二步：创建 Skill 链接
 
-根据你使用的 AI 工具，将技能文件链接到对应的目录。
+根据你使用的 AI 工具，将 skill 文件链接到对应的目录。
 
 #### OpenAI Codex
 
@@ -70,13 +70,30 @@ New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills"
 cmd /c mklink /J "$env:USERPROFILE\.claude\skills\edgeone" "$env:USERPROFILE\.edgeone-skills\skills\edgeone"
 ```
 
+#### Cursor
+
+Cursor 使用本地插件目录加载插件，需要链接整个仓库（而非仅 `skills/edgeone`）：
+
+```bash
+# macOS / Linux
+ln -s ~/.edgeone-skills ~/.cursor/plugins/local/edgeone-agent-plugins
+
+# Windows (PowerShell, 需要管理员权限)
+cmd /c mklink /J "$env:USERPROFILE\.cursor\plugins\local\edgeone-agent-plugins" "$env:USERPROFILE\.edgeone-skills"
+```
+
+> **注意**：Cursor 也可以通过直接克隆到插件目录来安装，跳过第一步：
+> ```bash
+> git clone https://github.com/TencentEdgeOne/edgeone-agent-plugins.git ~/.cursor/plugins/local/edgeone-agent-plugins
+> ```
+
 #### 其他 Agent 工具
 
-如果你使用的工具不在上述列表中，请将 `skills/edgeone` 目录复制或链接到该工具的技能加载目录下。通常是 `~/.<tool-name>/skills/` 或类似路径，请参考你的工具文档。
+如果你使用的工具不在上述列表中，请将 `skills/edgeone` 目录复制或链接到该工具的 skill 加载目录下。通常是 `~/.<tool-name>/skills/` 或类似路径，请参考你的工具文档。
 
 ### 第三步：重启你的 Agent
 
-退出并重新启动你的 AI 工具，使其发现新安装的技能。
+退出并重新启动你的 AI 工具，使其发现新安装的 skill。
 
 ## 验证安装
 
@@ -89,13 +106,13 @@ ls -la ~/.gemini/skills/edgeone  # Gemini CLI
 ls -la ~/.claude/skills/edgeone  # Claude Code
 ```
 
-然后在你的 Agent 中尝试以下对话来触发技能：
+然后在你的 Agent 中尝试以下对话来触发 skill：
 
 - 「帮我查一下 EdgeOne 站点列表」
 - 「帮我把 example.com 接入 EdgeOne」
 - 「出一份安全周报」
 
-如果 Agent 能够识别并加载 EdgeOne 技能，说明安装成功。
+如果 Agent 能够识别并加载 EdgeOne skill，说明安装成功。
 
 ## 更新
 
@@ -115,19 +132,3 @@ rm ~/.agents/skills/edgeone
 # （可选）删除克隆的仓库
 rm -rf ~/.edgeone-skills
 ```
-
-## 技能概览
-
-安装后，你将获得以下 EdgeOne 运维能力：
-
-| 能力 | 说明 | 风险等级 |
-|---|---|---|
-| API 调用环境 | tccli 安装、OAuth 凭证配置、接口检索 | — |
-| 站点接入向导 | 创建站点 → 验证归属权 → 添加域名 → 部署证书 | 🟠 中高 |
-| 缓存刷新与预热 | URL / 目录 / 全站刷新，URL 预热 | 🟡 中 |
-| 证书管理 | 证书状态查询、免费证书申请与部署、批量巡检 | 🟡 中 |
-| 安全周报 | 安全配置快照、策略变更感知 | 🟢 低 |
-| 安全模板审计 | 模板覆盖盘查、未绑定域名识别 | 🟢 低 |
-| 黑名单 IP 组查询 | 域名关联黑名单组识别与条目查看 | 🟢 低 |
-
-> **安全提示**：所有写操作（创建、修改、删除）执行前都会向用户说明影响并等待确认。Agent 不会索要 SecretId / SecretKey。

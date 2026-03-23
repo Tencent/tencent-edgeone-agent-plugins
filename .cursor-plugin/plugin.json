@@ -1,12 +1,9 @@
 {
     "name": "edgeone",
+    "description": "Skills for the Tencent EdgeOne platform — site acceleration, security protection, and operations",
     "version": "1.0.0",
-    "description": "Skills for the Tencent EdgeOne platform",
-    "logo": "logo.svg",
     "author": {
-        "name": "Tencent EdgeOne",
-        "email": "edgeone@tencent.com",
-        "url": "https://edgeone.ai"
+        "name": "Tencent EdgeOne"
     },
-    "keywords": ["edgeone", "tencent", "cdn", "edge", "security", "acceleration", "waf", "ddos", "dns", "ssl", "cache"]
+    "skills": "./skills/"
 }
