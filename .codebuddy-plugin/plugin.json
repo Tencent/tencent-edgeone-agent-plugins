@@ -1,0 +1,9 @@
+{
+    "name": "edgeone",
+    "version": "1.0.0",
+    "description": "EdgeOne 站点加速与安全防护技能",
+    "author": {
+        "name": "Tencent EdgeOne"
+    },
+    "skills": "./skills/"
+}
