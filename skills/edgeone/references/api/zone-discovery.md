@@ -1,6 +1,6 @@
 # 站点与域名发现
 
-EdgeOne 几乎所有 API 操作都需要 **ZoneId**（站点 ID，形如 `zone-2noz78a8ev6k`）。
+EdgeOne 几乎所有 API 操作都需要 **ZoneId**（站点 ID，形如 `zone-xxx123abc456`）。
 以下是发现 ZoneId 及反查域名的标准流程。
 
 ## 涉及 API
