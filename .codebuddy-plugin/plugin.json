@@ -1,0 +1,9 @@
+{
+    "name": "edgeone",
+    "version": "1.0.0",
+    "description": "腾讯云 EdgeOne（边缘安全加速平台）综合 skill，覆盖边缘加速（DNS、证书、缓存、规则引擎、四层代理、负载均衡）、边缘安全（DDoS 防护、Web 防护、Bot 管理）、边缘媒体（视频 / 图片即时处理）、边缘开发（边缘函数、EdgeOne Pages）等平台能力。",
+    "author": {
+        "name": "Tencent EdgeOne"
+    },
+    "skills": "./skills/"
+}
