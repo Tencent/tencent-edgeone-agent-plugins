@@ -7,7 +7,7 @@
 | Action | 说明 |
 |---|---|
 | DescribeSecurityPolicy | 查询站点安全策略配置 |
-| DescribeWebSecurityTemplates | 查询 Web 安全模板列表 |
+| DescribeWebSecurityTemplates | 查询站点下所有安全策略模板列表 |
 | DescribeSecurityIPGroup | 查询安全 IP 组列表 |
 
 > **命令用法**：本文档只列出 API 名称和流程指引。
@@ -108,3 +108,4 @@ tccli auth login
   "webSecurityTemplates": [],
   "securityIPGroups": []
 }
+```
