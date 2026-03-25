@@ -115,7 +115,7 @@ For complete mapping, refer to [Tencent Cloud Region/ISP Mappings](https://www.t
 | 153 | Yunnan | 118 | Guizhou | 173 | Guangxi | 1441 | Hainan |
 | 86 | Inner Mongolia | 1469 | Shanxi | 1464 | Liaoning | 1445 | Jilin |
 | 1467 | Heilongjiang | 1468 | Tianjin | 145 | Gansu | 1076 | Ningxia |
-| 119 | Qinghai | 152 | Xinjiang | 1155 | Tibet | | |
+| 119 | Qinghai | 152 | Xinjiang | | | | |
 
 > Reports must map codes to province names; never output raw numeric codes.
 
@@ -312,8 +312,7 @@ Call `DescribeTimingL7AnalysisData` with `day` granularity (`Interval=day`) to q
 **Step 2.1**: Collect L7 Top data (optional but recommended)
 
 Call `DescribeTopL7AnalysisData` to query Top domains by response traffic:
-- **`ZoneIds` is required** for `DescribeTopL7AnalysisData` — unlike `DescribeTimingL7AnalysisData`, this API does not support account-level queries without `ZoneIds`
-- If the account has many zones, first collect all active ZoneIds and pass them together
+- **`ZoneIds` is required** for `DescribeTopL7AnalysisData` — pass `["*"]` to query account-level aggregated data across all zones, or specify individual ZoneIds to filter by zone
 - **Must** include `Filters` for full data
 
 **Step 3**: Calculate trend metrics
