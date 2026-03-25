@@ -45,6 +45,6 @@ All operations require API calls via tccli. Before first use, complete the follo
 
 ## Reference Links
 
-- [EdgeOne Product Documentation](https://cloud.tencent.com/document/product/1552)
-- [EdgeOne API Documentation](https://cloud.tencent.com/document/api/1552)
+- [EdgeOne Product Documentation](https://edgeone.ai/document/56978)
+- [EdgeOne API Documentation](https://edgeone.ai/document/50454)
 - [API Usage Guide](../api/README.md)
