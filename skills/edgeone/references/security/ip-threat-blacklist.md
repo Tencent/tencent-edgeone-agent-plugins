@@ -8,6 +8,7 @@
 |---|---|
 | DescribeTopL7AnalysisData | 查询 7 层流量 Top 数据（按 IP 维度分析访问集中度） |
 | DescribeSecurityIPGroup | 查询站点下安全 IP 组列表（用于确认目标黑名单组） |
+| DescribeSecurityIPGroupContent | 查询指定 IP 组的详细条目列表 |
 | ModifySecurityIPGroup | 修改安全 IP 组条目（写入黑名单 IP） |
 
 > **命令用法**：本文档只列出 API 名称和流程指引。
@@ -103,14 +104,15 @@ tccli auth login
 #### 第四步：执行写入并验证
 
 1. 调用 `ModifySecurityIPGroup` 接口，将新增 IP 写入目标黑名单组
-2. 写入完成后，再次调用 `DescribeSecurityIPGroup` 查询目标 IP 组，验证条目数是否符合预期
+2. 写入完成后，调用 `DescribeSecurityIPGroupContent` 查询目标 IP 组的详细条目，验证新增 IP 是否已写入、条目总数是否符合预期
 3. 输出操作结果摘要
 
 ## 场景 C：查询当前黑名单 IP 组状态
 
 **触发**：用户说"查一下黑名单里有哪些 IP"、"现在黑名单组里有多少条目"。
 
-调用 `DescribeSecurityIPGroup` 接口，查询并展示指定 IP 组的当前条目列表。
+1. 调用 `DescribeSecurityIPGroup` 接口，确认目标 IP 组的名称和 ID。
+2. 调用 `DescribeSecurityIPGroupContent` 接口，查询并展示该 IP 组的详细条目列表。
 
 > 如需查询某个域名关联的黑名单 IP 组 ID，请参考 [domain-blacklist-inspector.md](domain-blacklist-inspector.md)。
 
