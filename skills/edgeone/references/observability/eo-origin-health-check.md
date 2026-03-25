@@ -1,154 +1,154 @@
 # eo-origin-health-check
 
-查询指定域名近 1 小时的回源状态码分布、源站健康比例，快速定位是 CDN 问题还是源站问题。
+Query the origin status code distribution and origin health ratio for a specified domain over the last hour to quickly determine whether the issue lies with the CDN or the origin server.
 
-## 涉及 API
+## APIs Involved
 
-| Action | 说明 |
+| Action | Description |
 |---|---|
-| DescribeTimingL7AnalysisData | 查询 7 层时序数据（按状态码维度分析边缘节点响应） |
-| DescribeTimingL7OriginPullData | 查询 7 层回源时序数据（回源状态码分布、回源流量/带宽） |
-| DescribeOriginGroupHealthStatus | 查询负载均衡实例下源站组健康状态（需负载均衡功能） |
+| DescribeTimingL7AnalysisData | Query L7 time-series data (response status code analysis at edge nodes) |
+| DescribeTimingL7OriginPullData | Query L7 origin-pull time-series data (origin status code distribution, origin traffic/bandwidth) |
+| DescribeOriginGroupHealthStatus | Query origin group health status under a load balancing instance (requires load balancing feature) |
 
-> **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
+> **Command usage**: This document only lists API names and workflow guidance.
+> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm complete parameters and response descriptions.
 
-## 前置条件
+## Prerequisites
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行。如果环境中尚未配置可用凭证，必须先引导用户完成登录：
+1. All Tencent Cloud API calls are executed via `tccli`. If no valid credentials are configured in the environment, guide the user to log in first:
 
 ```sh
 tccli auth login
 ```
 
-> 执行后终端会打印授权链接，在用户完成浏览器授权前保持阻塞，授权成功后命令自动结束。
-> 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令。
+> The terminal will print an authorization link after execution and remain blocked until the user completes browser authorization, after which the command ends automatically.
+> Never ask the user for `SecretId` / `SecretKey`, and do not execute any commands that could expose credential contents.
 
-2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
+2. ZoneId must be obtained first. Refer to [../api/zone-discovery.md](../api/zone-discovery.md).
 
-## 场景 A：查询回源状态码分布
+## Scenario A: Query Origin Status Code Distribution
 
-**触发**：用户说"帮我看看 example.com 最近的回源情况"、"回源有没有异常"、"源站健康吗"。
+**Trigger**: User says "check the origin status for example.com", "are there any origin issues", "is the origin healthy".
 
-### 流程
+### Workflow
 
-**第一步**：确认查询参数
+**Step 1**: Confirm query parameters
 
-- 确认目标域名（必须由用户指定或从上下文获取）
-- 默认查询最近 1 小时，用户也可指定其他时间范围
-- 时间范围建议避开最近 10 分钟（API 有数据延迟）
+- Confirm the target domain (must be specified by the user or obtained from context)
+- Default query range is the last 1 hour; the user may also specify a different time range
+- Recommend avoiding the most recent 10 minutes (API data has a delay)
 
-**第二步**：查询回源状态码分布
+**Step 2**: Query origin status code distribution
 
-调用 `DescribeTimingL7OriginPullData`，指定：
-- `DimensionName=origin-status-code-category`：按回源状态码大类（2xx/3xx/4xx/5xx）分组
-- `MetricNames=["l7Flow_request_hy"]`：回源请求数
-- 通过 `Filters` 中的 `domain` 过滤条件限定目标域名
-- 使用 `min` 粒度便于识别异常时段
+Call `DescribeTimingL7OriginPullData` with:
+- `DimensionName=origin-status-code-category`: Group by origin status code category (2xx/3xx/4xx/5xx)
+- `MetricNames=["l7Flow_request_hy"]`: Origin-pull request count
+- Use the `domain` key in `Filters` to filter for the target domain
+- Use `min` granularity for easier identification of anomaly periods
 
-**第三步**：计算健康指标
+**Step 3**: Calculate health metrics
 
-- 健康比例 = 2xx 请求数 / 总回源请求数 × 100%
-- 异常比例 = (4xx + 5xx) 请求数 / 总回源请求数 × 100%
-- 若 5xx 占比 > 5%，标记为 ⚠️ 异常
+- Health ratio = 2xx requests / total origin requests × 100%
+- Anomaly ratio = (4xx + 5xx) requests / total origin requests × 100%
+- If 5xx ratio > 5%, mark as ⚠️ Anomaly
 
-**第四步**：查询源站组健康状态（可选）
+**Step 4**: Query origin group health status (optional)
 
-如果用户站点配置了负载均衡，调用 `DescribeOriginGroupHealthStatus` 查询源站组健康状态，获取各源站的具体健康状况。
+If the user's zone has load balancing configured, call `DescribeOriginGroupHealthStatus` to query origin group health status and get the specific health condition of each origin server.
 
-> 注意：`DescribeOriginGroupHealthStatus` 需要 `LBInstanceId` 参数（负载均衡实例 ID），仅在使用负载均衡功能时可用。若用户未使用负载均衡，跳过此步骤。
+> Note: `DescribeOriginGroupHealthStatus` requires the `LBInstanceId` parameter (load balancing instance ID) and is only available when load balancing is in use. Skip this step if the user does not use load balancing.
 
-**输出建议**：以"健康评分 + 状态码分布表格 + 源站组状态（如有）"的形式回答，异常指标高亮标注。
+**Output recommendation**: Present the response as "health score + status code distribution table + origin group status (if available)", with anomaly indicators highlighted.
 
-## 场景 B：快速定位故障归因
+## Scenario B: Quick Fault Root Cause Analysis
 
-**触发**：用户说"CDN 问题还是源站问题"、"帮我排查一下回源故障"、"5xx 是哪来的"。
+**Trigger**: User says "is it a CDN issue or an origin issue", "help me troubleshoot the origin failure", "where are the 5xx errors coming from".
 
-### 流程
+### Workflow
 
-**第一步**：采集边缘节点状态码数据
+**Step 1**: Collect edge node status code data
 
-调用 `DescribeTimingL7AnalysisData`，查询边缘节点对客户端的响应状态码：
+Call `DescribeTimingL7AnalysisData` to query the response status codes from edge nodes to clients:
 - `MetricNames=["l7Flow_request"]`
-- 通过 `Filters` 按状态码（`statusCode`）过滤 5xx 类错误
-- 通过 `Filters` 中的 `domain` 限定目标域名
+- Filter for 5xx errors via `statusCode` in `Filters`
+- Filter for the target domain via `domain` in `Filters`
 
-**第二步**：采集回源状态码数据
+**Step 2**: Collect origin status code data
 
-调用 `DescribeTimingL7OriginPullData`，查询回源状态码：
+Call `DescribeTimingL7OriginPullData` to query origin status codes:
 - `DimensionName=origin-status-code-category`
 - `MetricNames=["l7Flow_request_hy"]`
-- 通过 `Filters` 中的 `domain` 限定目标域名
+- Filter for the target domain via `domain` in `Filters`
 
-**第三步**：对比分析归因
+**Step 3**: Comparative analysis for root cause
 
-将边缘 5xx 与回源 5xx 进行对比：
+Compare edge 5xx with origin 5xx:
 
-| 边缘 5xx | 回源 5xx | 初步结论 |
+| Edge 5xx | Origin 5xx | Preliminary Conclusion |
 |---|---|---|
-| 高 | 高（且比例接近） | 问题大概率在源站侧 |
-| 高 | 低或无 | 问题可能在 CDN 节点侧 |
-| 低 | 高 | 存在回源失败但 CDN 有缓存兜底 |
+| High | High (with similar ratio) | Issue is most likely on the origin server side |
+| High | Low or none | Issue is likely on the CDN node side |
+| Low | High | Origin failures exist but CDN cache is serving as fallback |
 
-**第四步**：给出归因结论和建议
+**Step 4**: Provide root cause conclusion and recommendations
 
-- 明确标注"源站问题"或"CDN 问题"或"需进一步排查"
-- 给出下一步操作建议（如联动 [eo-log-analyzer.md](eo-log-analyzer.md) 深入分析日志）
+- Clearly label as "origin issue", "CDN issue", or "further investigation needed"
+- Provide next-step recommendations (e.g., use [eo-log-analyzer.md](eo-log-analyzer.md) for deeper log analysis)
 
-**输出建议**：以"边缘 vs 回源对比表 + 归因结论 + 建议"的形式回答。
+**Output recommendation**: Present the response as "edge vs origin comparison table + root cause conclusion + recommendations".
 
-## 输出格式
+## Output Format
 
-### 场景 A：回源健康巡检报告
+### Scenario A: Origin Health Inspection Report
 
 ```markdown
-## 回源健康巡检 — <域名>（最近 <N> 小时）
+## Origin Health Inspection — <domain> (Last <N> Hours)
 
-**站点**：<站点名称>（ZoneId: <zone-id>）
-**查询时间范围**：<起始时间> ～ <结束时间>
-**健康评分**：<评分>（✅ 健康 / ⚠️ 存在异常 / 🔴 严重异常）
+**Zone**: <zone name> (ZoneId: <zone-id>)
+**Query Time Range**: <start time> – <end time>
+**Health Score**: <score> (✅ Healthy / ⚠️ Anomaly Detected / 🔴 Critical Anomaly)
 
-### 回源状态码分布
+### Origin Status Code Distribution
 
-| 状态码大类 | 请求数 | 占比 |
+| Status Code Category | Request Count | Ratio |
 |---|---|---|
 | 2xx | ... | ...% |
 | 3xx | ... | ...% |
 | 4xx | ... | ...% |
 | 5xx | ... | ...% ⚠️ |
 
-### 源站组健康状态（如有负载均衡）
+### Origin Group Health Status (if load balancing is enabled)
 
-| 源站组 | 状态 | 异常源站 |
+| Origin Group | Status | Unhealthy Origins |
 |---|---|---|
 | ... | ... | ... |
 
-### 快速归因
+### Quick Root Cause
 
-- <一句话归因结论>
-- 建议：<下一步操作>
+- <one-sentence root cause conclusion>
+- Recommendation: <next step>
 ```
 
-### 场景 B：故障归因分析
+### Scenario B: Fault Root Cause Analysis
 
 ```markdown
-## 5xx 故障归因分析 — <域名>
+## 5xx Fault Root Cause Analysis — <domain>
 
-**查询时间范围**：<起始时间> ～ <结束时间>
+**Query Time Range**: <start time> – <end time>
 
-### 边缘 vs 回源对比
+### Edge vs Origin Comparison
 
-| 指标 | 边缘节点 | 回源 |
+| Metric | Edge Node | Origin |
 |---|---|---|
-| 5xx 占比 | ...% | ...% |
-| 主要错误码 | ... | ... |
+| 5xx Ratio | ...% | ...% |
+| Primary Error Codes | ... | ... |
 
-### 归因结论
+### Root Cause Conclusion
 
-<结论说明>
+<conclusion description>
 
-### 建议
+### Recommendations
 
-1. <建议 1>
-2. <建议 2>
+1. <recommendation 1>
+2. <recommendation 2>
 ```

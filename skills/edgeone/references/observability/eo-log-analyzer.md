@@ -1,159 +1,159 @@
 # eo-log-analyzer
 
-用户描述故障时间段和域名，自动下载日志、本地解析、提取异常明细，给出模式识别结论和故障推断建议。升级自 [eo-log-downloader.md](eo-log-downloader.md)，前者仅提供下载链接，本场景进一步完成日志解析和分析。
+Users describe a fault time period and domain to automatically download logs, parse them locally, extract anomaly details, and provide pattern recognition conclusions with fault inference recommendations. This is an upgrade from [eo-log-downloader.md](eo-log-downloader.md), which only provides download links — this scenario further completes log parsing and analysis.
 
-## 涉及 API
+## APIs Involved
 
-| Action | 说明 |
+| Action | Description |
 |---|---|
-| DownloadL7Logs | 获取 7 层离线日志下载链接 |
-| DownloadL4Logs | 获取 4 层离线日志下载链接（当分析 4 层日志时） |
+| DownloadL7Logs | Retrieve L7 offline log download links |
+| DownloadL4Logs | Retrieve L4 offline log download links (when analyzing L4 logs) |
 
-> **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
+> **Command usage**: This document only lists API names and workflow guidance.
+> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm complete parameters and response descriptions.
 
-## 前置条件
+## Prerequisites
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行。如果环境中尚未配置可用凭证，必须先引导用户完成登录：
+1. All Tencent Cloud API calls are executed via `tccli`. If no valid credentials are configured in the environment, guide the user to log in first:
 
 ```sh
 tccli auth login
 ```
 
-> 执行后终端会打印授权链接，在用户完成浏览器授权前保持阻塞，授权成功后命令自动结束。
-> 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令。
+> The terminal will print an authorization link after execution and remain blocked until the user completes browser authorization, after which the command ends automatically.
+> Never ask the user for `SecretId` / `SecretKey`, and do not execute any commands that could expose credential contents.
 
-2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
+2. ZoneId must be obtained first. Refer to [../api/zone-discovery.md](../api/zone-discovery.md).
 
-## 特别设计说明
+## Special Design Notes
 
-- **纯读操作**：所有 API 调用均为只读查询，日志下载和解析均在本地完成
-- **写操作为本地文件**：日志解析后在客户端本地完成，原始日志不上传、不修改
-- **高流量域名采用聚合摘要**：对于请求量极大的域名，采用聚合摘要分析（按 URI/状态码/IP 分组统计），而非全量日志逐行输出，避免信息过载
-- **可联动其他场景**：分析结论可引导用户联动 [eo-origin-health-check.md](eo-origin-health-check.md) 排查源站问题，或联动 [../security/ip-threat-blacklist.md](../security/ip-threat-blacklist.md) 对异常 IP 执行封禁
+- **Read-only operations**: All API calls are read-only queries; log downloading and parsing are performed locally
+- **Local file writes only**: Log parsing is completed on the client side locally; raw logs are not uploaded or modified
+- **Aggregated summaries for high-traffic domains**: For domains with extremely high request volumes, use aggregated summary analysis (grouped statistics by URI/status code/IP) rather than line-by-line output of full logs, to avoid information overload
+- **Cross-scenario integration**: Analysis conclusions can guide the user to use [eo-origin-health-check.md](eo-origin-health-check.md) for origin troubleshooting, or [../security/ip-threat-blacklist.md](../security/ip-threat-blacklist.md) to block anomalous IPs
 
-## 场景 A：故障时段日志分析
+## Scenario A: Fault Period Log Analysis
 
-**触发**：用户说"帮我分析一下 example.com 今天下午 3 点到 4 点的日志"、"502 特别多，帮我看看是什么问题"、"分析一下日志找找异常"。
+**Trigger**: User says "analyze the logs for example.com from 3 PM to 4 PM today", "too many 502 errors, help me figure out what's going on", "analyze the logs and find the anomalies".
 
-### 流程
+### Workflow
 
-**第一步**：确认分析参数
+**Step 1**: Confirm analysis parameters
 
-- 确认目标域名（必须由用户指定或从上下文获取）
-- 解析时间范围（自然语言转 ISO 8601）
-- 确认关注的异常类型（默认关注 4xx + 5xx，用户也可指定特定状态码如 502）
+- Confirm the target domain (must be specified by the user or obtained from context)
+- Parse the time range (natural language to ISO 8601)
+- Confirm the anomaly type of interest (default: 4xx + 5xx; the user may also specify a particular status code such as 502)
 
-**第二步**：下载日志文件
+**Step 2**: Download log files
 
-调用 `DownloadL7Logs` 获取对应时段的日志下载链接，然后执行下载：
-- 使用 `curl` 或 `wget` 下载日志文件到本地临时目录
-- 日志文件通常为 `.gz` 压缩格式，使用 `gunzip` 解压
-- 日志字段以制表符分隔
+Call `DownloadL7Logs` to get the log download links for the corresponding time period, then download:
+- Use `curl` or `wget` to download log files to a local temporary directory
+- Log files are typically in `.gz` compressed format; use `gunzip` to decompress
+- Log fields are tab-separated
 
-> 如果日志文件较多或较大，优先下载覆盖用户关注时段的文件，避免不必要的大批量下载。
+> If there are many or large log files, prioritize downloading files that cover the user's time period of interest to avoid unnecessary bulk downloads.
 
-**第三步**：解析日志并提取异常
+**Step 3**: Parse logs and extract anomalies
 
-对解压后的日志进行结构化解析：
-- 按状态码过滤异常请求（4xx、5xx）
-- 按 URI 聚合统计异常请求数量和占比
-- 按客户端 IP 聚合统计，识别请求集中度
-- 按时间窗口（如 5 分钟粒度）聚合，识别异常峰值时段
+Perform structured parsing on the decompressed logs:
+- Filter anomalous requests by status code (4xx, 5xx)
+- Aggregate anomalous request count and ratio by URI
+- Aggregate by client IP to identify request concentration
+- Aggregate by time window (e.g., 5-minute granularity) to identify anomaly peak periods
 
-**第四步**：模式识别
+**Step 4**: Pattern recognition
 
-对聚合数据进行模式分析：
+Perform pattern analysis on the aggregated data:
 
-| 模式 | 特征 | 可能原因 |
+| Pattern | Characteristics | Possible Cause |
 |---|---|---|
-| 单 URI 集中 502 | 某个 URI 的 502 占比远超其他 | 该 URI 对应的后端服务异常 |
-| IP 集中异常请求 | 少量 IP 产生大量异常请求 | 可能存在爬虫、攻击或异常客户端 |
-| 全局性 5xx 突增 | 所有 URI 的 5xx 在同一时段集中出现 | 源站整体过载或故障 |
-| 间歇性 504 | 504 在特定时间窗口反复出现 | 源站响应超时，可能存在性能瓶颈 |
+| Single URI concentrated 502 | One URI has a much higher 502 ratio than others | The backend service for that URI is malfunctioning |
+| IP-concentrated anomalous requests | A few IPs generate a large number of anomalous requests | Possible crawler, attack, or malfunctioning client |
+| Global 5xx spike | All URIs show concentrated 5xx in the same time period | Overall origin server overload or failure |
+| Intermittent 504 | 504 errors appear repeatedly in specific time windows | Origin response timeout, possible performance bottleneck |
 
-**第五步**：输出分析报告
+**Step 5**: Output analysis report
 
-汇总异常明细表、模式识别结论和故障推断建议。
+Summarize the anomaly details table, pattern recognition conclusions, and fault inference recommendations.
 
-**输出建议**：以"总览摘要 + 异常 URI Top N 表格 + 模式识别结论 + 建议"的形式回答。
+**Output recommendation**: Present the response as "overview summary + anomalous URI Top N table + pattern recognition conclusions + recommendations".
 
-## 场景 B：查看回源失败集中时段
+## Scenario B: Identify Origin Failure Concentration Periods
 
-**触发**：用户说"帮我看看最近回源失败集中在什么时间段"、"哪个时段 5xx 最多"、"帮我找一下故障高峰时段"。
+**Trigger**: User says "show me when origin failures were concentrated recently", "which time period had the most 5xx errors", "help me find the fault peak periods".
 
-### 流程
+### Workflow
 
-**第一步**：确认查询参数
+**Step 1**: Confirm query parameters
 
-- 确认目标域名
-- 默认查询最近 6 小时，用户也可指定其他时间范围
+- Confirm the target domain
+- Default query range is the last 6 hours; the user may also specify a different time range
 
-**第二步**：下载并解析日志
+**Step 2**: Download and parse logs
 
-同场景 A 第二步和第三步，但重点按时间窗口聚合：
-- 以 5 分钟或 10 分钟为粒度，统计每个时间窗口的 5xx 请求数
-- 计算每个窗口的 5xx 占比
+Same as Scenario A Steps 2 and 3, but focus on time-window aggregation:
+- Use 5-minute or 10-minute granularity to count 5xx requests per time window
+- Calculate the 5xx ratio for each window
 
-**第三步**：识别峰值时段
+**Step 3**: Identify peak periods
 
-- 标记 5xx 数量最高的 Top 3 时段
-- 计算峰值时段与平均值的偏差倍数
+- Mark the Top 3 time periods with the highest 5xx count
+- Calculate the deviation multiplier of peak periods from the average
 
-**第四步**：输出时段分布
+**Step 4**: Output time distribution
 
-将时段分布整理为表格，高亮峰值时段，并给出进一步分析建议。
+Organize the time distribution into a table, highlight peak periods, and provide further analysis recommendations.
 
-**输出建议**：以"时段分布表格 + 峰值时段标注 + 下一步建议"的形式回答。
+**Output recommendation**: Present the response as "time distribution table + peak period annotations + next-step recommendations".
 
-## 输出格式
+## Output Format
 
-### 场景 A：日志分析报告
+### Scenario A: Log Analysis Report
 
 ```markdown
-## 日志分析报告 — <域名>
+## Log Analysis Report — <domain>
 
-**站点**：<站点名称>（ZoneId: <zone-id>）
-**分析时间段**：<起始时间> ～ <结束时间>
-**总请求数**：<N> | **异常请求数**：<M>（<占比>%）
+**Zone**: <zone name> (ZoneId: <zone-id>)
+**Analysis Time Period**: <start time> – <end time>
+**Total Requests**: <N> | **Anomalous Requests**: <M> (<ratio>%)
 
-### 异常 URI Top 10
+### Anomalous URI Top 10
 
-| URI | 异常次数 | 占异常总量比例 | 主要错误码 | 来源 IP 集中度 |
+| URI | Anomaly Count | Ratio of Total Anomalies | Primary Error Code | Source IP Concentration |
 |---|---|---|---|---|
-| ... | ... | ...% | 502 | 分散 / 集中（N 个 IP） |
+| ... | ... | ...% | 502 | Dispersed / Concentrated (N IPs) |
 
-### 模式识别
+### Pattern Recognition
 
-- <模式 1 描述>
-- <模式 2 描述>
+- <pattern 1 description>
+- <pattern 2 description>
 
-### 建议
+### Recommendations
 
-1. <建议 1>（可联动 eo-origin-health-check 排查源站）
-2. <建议 2>（可联动 ip-threat-blacklist 封禁异常 IP）
+1. <recommendation 1> (consider using eo-origin-health-check for origin troubleshooting)
+2. <recommendation 2> (consider using ip-threat-blacklist to block anomalous IPs)
 ```
 
-### 场景 B：回源失败时段分布
+### Scenario B: Origin Failure Time Distribution
 
 ```markdown
-## 回源失败时段分布 — <域名>（最近 <N> 小时）
+## Origin Failure Time Distribution — <domain> (Last <N> Hours)
 
-**分析时间范围**：<起始时间> ～ <结束时间>
+**Analysis Time Range**: <start time> – <end time>
 
-| 时段 | 5xx 次数 | 占比 | 备注 |
+| Time Period | 5xx Count | Ratio | Remarks |
 |---|---|---|---|
-| HH:MM-HH:MM | ... | ...% | 峰值 ⚠️ |
+| HH:MM–HH:MM | ... | ...% | Peak ⚠️ |
 | ... | ... | ...% | |
 
-### 结论
+### Conclusion
 
-- 故障集中在 <时段>，建议重点分析该时段日志（可使用场景 A 进一步分析）。
+- Failures are concentrated in <time period>. Recommend focusing analysis on logs from that period (use Scenario A for deeper analysis).
 ```
 
-## 注意事项
+## Notes
 
-> - 日志解析在客户端本地完成，确保有足够的磁盘空间存储临时日志文件。
-> - 高流量域名的日志文件可能非常大，优先使用聚合统计而非逐行分析。
-> - 如果回源错误（如 502 集中在某些 IP），可联动 [eo-origin-health-check.md](eo-origin-health-check.md) 进行回源健康巡检。
-> - 如果异常请求集中在少量客户端 IP，可联动 [../security/ip-threat-blacklist.md](../security/ip-threat-blacklist.md) 进行 IP 封禁操作。
+> - Log parsing is performed locally on the client; ensure sufficient disk space for temporary log files.
+> - Log files for high-traffic domains can be very large; prefer aggregated statistics over line-by-line analysis.
+> - If origin errors (e.g., 502 concentrated on certain IPs) are found, use [eo-origin-health-check.md](eo-origin-health-check.md) for origin health inspection.
+> - If anomalous requests are concentrated on a few client IPs, use [../security/ip-threat-blacklist.md](../security/ip-threat-blacklist.md) for IP blocking.

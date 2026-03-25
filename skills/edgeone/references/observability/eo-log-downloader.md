@@ -1,110 +1,110 @@
 # eo-log-downloader
 
-用户通过自然语言描述时间范围和域名，自动获取对应离线日志的下载链接列表，省去手动在控制台选择时间范围、域名等繁琐步骤。
+Users describe a time range and domain in natural language to automatically retrieve the corresponding offline log download links, eliminating the tedious steps of manually selecting time ranges and domains in the console.
 
-## 涉及 API
+## APIs Involved
 
-| Action | 说明 |
+| Action | Description |
 |---|---|
-| DownloadL7Logs | 获取 7 层离线日志下载链接 |
-| DownloadL4Logs | 获取 4 层离线日志下载链接 |
+| DownloadL7Logs | Retrieve L7 offline log download links |
+| DownloadL4Logs | Retrieve L4 offline log download links |
 
-> **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
+> **Command usage**: This document only lists API names and workflow guidance.
+> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm complete parameters and response descriptions.
 
-## 前置条件
+## Prerequisites
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行。如果环境中尚未配置可用凭证，必须先引导用户完成登录：
+1. All Tencent Cloud API calls are executed via `tccli`. If no valid credentials are configured in the environment, guide the user to log in first:
 
 ```sh
 tccli auth login
 ```
 
-> 执行后终端会打印授权链接，在用户完成浏览器授权前保持阻塞，授权成功后命令自动结束。
-> 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令。
+> The terminal will print an authorization link after execution and remain blocked until the user completes browser authorization, after which the command ends automatically.
+> Never ask the user for `SecretId` / `SecretKey`, and do not execute any commands that could expose credential contents.
 
-2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
+2. ZoneId must be obtained first. Refer to [../api/zone-discovery.md](../api/zone-discovery.md).
 
-## 场景 A：按时间和域名下载 7 层日志
+## Scenario A: Download L7 Logs by Time and Domain
 
-**触发**：用户说"帮我拿一下 example.com 昨天下午的日志"、"下载 example.com 近 6 小时的日志"、"帮我下载日志"。
+**Trigger**: User says "get me the logs for example.com from yesterday afternoon", "download the last 6 hours of logs for example.com", "help me download the logs".
 
-### 流程
+### Workflow
 
-**第一步**：解析时间范围
+**Step 1**: Parse time range
 
-- 将用户的自然语言时间描述转换为 ISO 8601 格式的起止时间
-- 示例："昨天下午 2 点到 4 点" → `2026-03-24T14:00:00+08:00` 至 `2026-03-24T16:00:00+08:00`
-- 若用户只说"最近 N 小时"，从当前时间往前推算
-- 若用户未指定时间范围，询问确认
+- Convert the user's natural language time description to ISO 8601 format start and end times
+- Example: "yesterday from 2 PM to 4 PM" → `2026-03-24T14:00:00+08:00` to `2026-03-24T16:00:00+08:00`
+- If the user only says "last N hours", calculate backward from the current time
+- If the user does not specify a time range, ask for confirmation
 
-**第二步**：确认域名
+**Step 2**: Confirm domain
 
-- 若用户指定了域名，直接使用
-- 若用户未指定域名，询问确认（也可以不传 `Domains` 参数以下载全部域名日志，但应先向用户说明）
+- If the user specified a domain, use it directly
+- If the user did not specify a domain, ask for confirmation (the `Domains` parameter can be omitted to download logs for all domains, but inform the user first)
 
-**第三步**：获取日志下载链接
+**Step 3**: Retrieve log download links
 
-调用 `DownloadL7Logs`，传入：
-- `StartTime` / `EndTime`：第一步解析的起止时间
-- `ZoneIds`：站点 ID
-- `Domains`：目标域名列表（可选）
-- 若结果较多，注意通过 `Limit` 和 `Offset` 进行分页（默认 Limit=20，最大 300）
+Call `DownloadL7Logs` with:
+- `StartTime` / `EndTime`: Start and end times parsed in Step 1
+- `ZoneIds`: Zone ID
+- `Domains`: Target domain list (optional)
+- If there are many results, use `Limit` and `Offset` for pagination (default Limit=20, max 300)
 
-**第四步**：整理输出
+**Step 4**: Organize output
 
-将返回的日志文件列表整理为可直接点击下载的链接表格，输出可直接点击的下载链接。
+Organize the returned log file list into a clickable download link table with directly accessible download links.
 
-**输出建议**：以"查询参数摘要 + 下载链接表格"的形式回答，链接可直接点击下载。
+**Output recommendation**: Present the response as "query parameter summary + download link table" with directly clickable download links.
 
-## 场景 B：下载 4 层日志
+## Scenario B: Download L4 Logs
 
-**触发**：用户说"下载 4 层日志"、"帮我拿 L4 的日志"、"下载四层代理日志"。
+**Trigger**: User says "download L4 logs", "get me the L4 logs", "download the layer 4 proxy logs".
 
-### 流程
+### Workflow
 
-**第一步**：解析时间范围
+**Step 1**: Parse time range
 
-同场景 A 第一步。
+Same as Scenario A Step 1.
 
-**第二步**：确认 4 层代理实例
+**Step 2**: Confirm L4 proxy instance
 
-- 若用户指定了 ProxyId，直接使用
-- 若用户未指定，询问是否下载全部四层实例日志
+- If the user specified a ProxyId, use it directly
+- If the user did not specify, ask whether to download logs for all L4 instances
 
-**第三步**：获取日志下载链接
+**Step 3**: Retrieve log download links
 
-调用 `DownloadL4Logs`，传入：
-- `StartTime` / `EndTime`：起止时间
-- `ZoneIds`：站点 ID
-- `ProxyIds`：四层实例 ID 列表（可选）
-- 注意分页处理（默认 Limit=20，最大 300）
+Call `DownloadL4Logs` with:
+- `StartTime` / `EndTime`: Start and end times
+- `ZoneIds`: Zone ID
+- `ProxyIds`: L4 instance ID list (optional)
+- Handle pagination (default Limit=20, max 300)
 
-**第四步**：整理输出
+**Step 4**: Organize output
 
-同场景 A 第四步。
+Same as Scenario A Step 4.
 
-**输出建议**：格式同场景 A，日志类型标注为"4 层日志"。
+**Output recommendation**: Same format as Scenario A, with log type labeled as "L4 logs".
 
-## 输出格式
+## Output Format
 
 ```markdown
-## 日志下载链接
+## Log Download Links
 
-**站点**：<站点名称>（ZoneId: <zone-id>）
-**域名**：<域名> / 全部域名
-**时间范围**：<起始时间> ～ <结束时间>
-**日志类型**：7 层访问日志 / 4 层代理日志
+**Zone**: <zone name> (ZoneId: <zone-id>)
+**Domain**: <domain> / All domains
+**Time Range**: <start time> – <end time>
+**Log Type**: L7 Access Logs / L4 Proxy Logs
 
-| 日志文件 | 大小 | 日志起始时间 | 日志结束时间 | 下载链接 |
+| Log File | Size | Log Start Time | Log End Time | Download Link |
 |---|---|---|---|---|
-| ... | ... MB | ... | ... | [下载](url) |
+| ... | ... MB | ... | ... | [Download](url) |
 
-共 N 个日志文件。
+Total: N log files.
 ```
 
-## 注意事项
+## Notes
 
-> - 离线日志存在一定延迟，最近时段的日志可能尚未生成，如返回为空可提示用户稍后重试。
-> - 下载链接有效期有限，请及时下载。
-> - 如需进一步分析日志内容（异常检测、模式识别等），可联动 [eo-log-analyzer.md](eo-log-analyzer.md)。
+> - Offline logs have a certain delay; logs for very recent time periods may not yet be generated. If results are empty, suggest the user retry later.
+> - Download links have a limited validity period; please download promptly.
+> - For further log content analysis (anomaly detection, pattern recognition, etc.), use [eo-log-analyzer.md](eo-log-analyzer.md).
