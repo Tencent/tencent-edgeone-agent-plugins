@@ -33,6 +33,7 @@ EdgeOne 综合 skill，根据用户需求定位合适的模块，加载对应 re
 | API 调用 | [references/api/README.md](references/api/README.md) | 调用规范、工具安装、凭证配置、接口检索、站点与域名发现（ZoneId 查询） |
 | 站点加速 | [references/acceleration/README.md](references/acceleration/README.md) | 站点接入、缓存刷新 / 预热、证书管理 |
 | 安全防护 | [references/security/README.md](references/security/README.md) | 安全策略模板盘查、黑名单 IP 组查询、安全周报 |
+| 可观测性 | [references/observability/README.md](references/observability/README.md) | 流量日报生成、回源健康巡检、离线日志下载与分析 |
 
 ## 兜底检索
 
