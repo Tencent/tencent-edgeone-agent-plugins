@@ -1,50 +1,50 @@
-# EdgeOne 可观测性参考
+# EdgeOne Observability Reference
 
-流量日报生成、回源健康巡检、离线日志下载与日志分析的运维指引。
+Operational guides for traffic daily report generation, origin health inspection, offline log download, and log analysis.
 
-## 快速决策树
+## Quick Decision Tree
 
 ```
-用户想做什么？
+What does the user want to do?
 │
-├─ 「帮我生成昨天的流量日报」
-│  「看看过去 24 小时的带宽峰值」
-│  └─ → eo-traffic-daily-report.md  🟢 低风险 · 自动采集 7 层/4 层数据，生成 Markdown 日报
+├─ "Generate yesterday's traffic daily report"
+│  "Show me the bandwidth peak over the last 24 hours"
+│  └─ → eo-traffic-daily-report.md  🟢 Low Risk · Auto-collect L7/L4 data and generate a Markdown daily report
 │
-├─ 「帮我看看 example.com 的回源情况」
-│  「源站健康吗」「CDN 问题还是源站问题」
-│  └─ → eo-origin-health-check.md  🟢 低风险 · 回源状态码分布 + 健康比例 + 快速归因
+├─ "Check the origin status for example.com"
+│  "Is the origin healthy?" "Is it a CDN issue or an origin issue?"
+│  └─ → eo-origin-health-check.md  🟢 Low Risk · Origin status code distribution + health ratio + quick root cause analysis
 │
-├─ 「帮我下载 example.com 昨天下午的日志」
-│  「下载近 6 小时的 4 层日志」
-│  └─ → eo-log-downloader.md  🟢 低风险 · 自然语言驱动的离线日志下载链接获取
+├─ "Download the logs for example.com from yesterday afternoon"
+│  "Download the last 6 hours of L4 logs"
+│  └─ → eo-log-downloader.md  🟢 Low Risk · Natural language driven offline log download link retrieval
 │
-├─ 「帮我分析一下日志，502 特别多」
-│  「分析一下异常请求都集中在哪些 URI」
-│  └─ → eo-log-analyzer.md  🟢 低风险 · 日志下载 + 本地解析 + 模式识别 + 故障推断
+├─ "Analyze the logs — too many 502 errors"
+│  "Which URIs have the most abnormal requests?"
+│  └─ → eo-log-analyzer.md  🟢 Low Risk · Log download + local parsing + pattern recognition + fault inference
 │
-└─ 不确定该调哪个 API
+└─ Not sure which API to call
    └─ → ../api/api-discovery.md
 ```
 
-## 前置条件
+## Prerequisites
 
-所有操作均需要通过 tccli 调用 API。首次使用前，请先完成：
+All operations require API calls via tccli. Before first use, complete the following:
 
-1. **工具检查** — 阅读 [../api/README.md](../api/README.md) 完成 tccli 安装与凭证配置
-2. **获取 ZoneId** — 阅读 [../api/zone-discovery.md](../api/zone-discovery.md) 获取站点 ID
+1. **Tool Setup** — Read [../api/README.md](../api/README.md) to install tccli and configure credentials
+2. **Get ZoneId** — Read [../api/zone-discovery.md](../api/zone-discovery.md) to obtain the zone ID
 
-## 本目录文件
+## Files in This Directory
 
-| 文件 | 风险等级 | 核心触发场景 |
+| File | Risk Level | Core Trigger Scenario |
 |---|---|---|
-| [eo-traffic-daily-report.md](eo-traffic-daily-report.md) | 🟢 低风险 | 每日定时查询 7 层/4 层流量趋势，生成带宽峰值、请求量、Top 域名/地区的 Markdown 日报 |
-| [eo-origin-health-check.md](eo-origin-health-check.md) | 🟢 低风险 | 查询回源状态码分布、源站健康比例，快速定位回源故障归因 |
-| [eo-log-downloader.md](eo-log-downloader.md) | 🟢 低风险 | 通过自然语言描述时间范围和域名，自动获取离线日志下载链接 |
-| [eo-log-analyzer.md](eo-log-analyzer.md) | 🟢 低风险 | 自动下载日志并本地解析，提取异常明细，给出模式识别结论和故障推断建议 |
+| [eo-traffic-daily-report.md](eo-traffic-daily-report.md) | 🟢 Low Risk | Query L7/L4 traffic trends daily and generate a Markdown report with bandwidth peak, request volume, and Top domains/regions |
+| [eo-origin-health-check.md](eo-origin-health-check.md) | 🟢 Low Risk | Query origin status code distribution and origin health ratio for quick origin fault root cause analysis |
+| [eo-log-downloader.md](eo-log-downloader.md) | 🟢 Low Risk | Describe time range and domain in natural language to automatically retrieve offline log download links |
+| [eo-log-analyzer.md](eo-log-analyzer.md) | 🟢 Low Risk | Automatically download and parse logs locally, extract anomaly details, and provide pattern recognition conclusions with fault inference recommendations |
 
-## 参考链接
+## Reference Links
 
-- [EdgeOne 产品文档](https://cloud.tencent.com/document/product/1552)
-- [EdgeOne API 文档](https://cloud.tencent.com/document/api/1552)
-- [API 调用指引](../api/README.md)
+- [EdgeOne Product Documentation](https://cloud.tencent.com/document/product/1552)
+- [EdgeOne API Documentation](https://cloud.tencent.com/document/api/1552)
+- [API Usage Guide](../api/README.md)
