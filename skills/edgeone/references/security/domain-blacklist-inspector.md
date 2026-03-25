@@ -2,7 +2,7 @@
 
 查询 EdgeOne 指定域名关联的安全策略，解析策略规则中 `action=block` 的 IP 组引用，输出黑名单 IP 组映射报告。
 
-> **定位说明**：本 Skill 是写操作（如 `eo-ip-threat-blacklist`）的**前置诊断步骤**。在向黑名单 IP 组写入条目之前，应先用本 Skill 查清楚目标黑名单组 ID，避免误操作错误的 IP 组。
+> **定位说明**：本 Skill 是写操作（如 `ip-threat-blacklist`）的**前置诊断步骤**。在向黑名单 IP 组写入条目之前，应先用本 Skill 查清楚目标黑名单组 ID，避免误操作错误的 IP 组。
 
 ## 涉及 API
 
@@ -40,6 +40,8 @@
 
 对第一步中识别出的每个黑名单 IP 组，逐一调用 `DescribeSecurityIPGroupContent` 接口查询其详细内容。
 
+> 如果 IP 组条目数量较多，注意接口可能存在分页限制，需按分页参数循环查询直至获取全部条目，并在输出中注明实际总条目数。
+
 ### 黑名单 IP 组识别规则
 
 **以规则动作为主要判断依据**：
@@ -58,7 +60,7 @@
 ## 黑名单 IP 组查询结果
 
 **域名**：example.com（ZoneId: zone-xxx）
-**查询时间**：YYYY-MM-DD
+**查询时间**：YYYY-MM-DD HH:MM:SS
 **数据来源**：DescribeSecurityPolicy / DescribeSecurityIPGroup / DescribeSecurityIPGroupContent
 
 ### 黑名单 IP 组（action=block 规则引用）
@@ -94,4 +96,4 @@
 - 其他值得关注的拦截规则
 ```
 
-> **只读声明**：本技能仅执行查询操作，不进行任何 IP 组修改或策略变更。如需修改黑名单，请在控制台操作或调用相应写接口，操作前请确认影响范围。
+> **只读声明**：本技能仅执行查询操作，不进行任何 IP 组修改或策略变更。如需修改黑名单，请使用 [ip-threat-blacklist.md](ip-threat-blacklist.md) 或在控制台操作，操作前请确认影响范围。
