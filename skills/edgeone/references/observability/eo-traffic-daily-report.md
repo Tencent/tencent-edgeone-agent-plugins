@@ -307,12 +307,12 @@ Call `DescribeTimingL7AnalysisData` with `day` granularity (`Interval=day`) to q
 - `l7Flow_outBandwidth`: Daily bandwidth peak
 - `l7Flow_request`: Daily total requests
 - **Must** include `Filters` for full data (see "Data Conventions > Full Data vs Post-Mitigation Data")
-- When not specifying `ZoneIds`, account-level aggregated data is returned
+- When not specifying `ZoneIds` (or passing `["*"]`), account-level aggregated data is returned
 
 **Step 2.1**: Collect L7 Top data (optional but recommended)
 
 Call `DescribeTopL7AnalysisData` to query Top domains by response traffic:
-- **`ZoneIds` is required** for `DescribeTopL7AnalysisData` — pass `["*"]` to query account-level aggregated data across all zones, or specify individual ZoneIds to filter by zone
+- When not specifying `ZoneIds` (or passing `["*"]`), account-level aggregated data is returned; specify individual ZoneIds to filter by zone
 - **Must** include `Filters` for full data
 
 **Step 3**: Calculate trend metrics
