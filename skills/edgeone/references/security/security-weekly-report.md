@@ -1,103 +1,105 @@
 # security-weekly-report
 
-管理 EdgeOne 站点的安全防护状态：生成配置快照、感知策略异常变更、输出安全周报。
+Manage the security protection status of EdgeOne zones: generate configuration snapshots, detect abnormal policy changes, and produce security reports.
 
-## 涉及 API
+## APIs Involved
 
-| Action | 说明 |
+| Action | Description |
 |---|---|
-| DescribeSecurityPolicy | 查询站点安全策略配置 |
-| DescribeWebSecurityTemplates | 查询站点下所有安全策略模板列表 |
-| DescribeSecurityIPGroup | 查询安全 IP 组列表 |
+| `DescribeSecurityPolicy` | Query the zone's security policy configuration |
+| `DescribeWebSecurityTemplates` | Query all security policy templates under the zone |
+| `DescribeSecurityIPGroup` | Query the security IP group list |
 
-> **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
+> **Command usage**: This document only lists API names and process guidelines.
+> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm the complete parameters and response descriptions.
 
-## 前置条件
+## Prerequisites
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行。如果环境中尚未配置可用凭证，必须先引导用户完成登录：
+1. All Tencent Cloud API calls are executed via `tccli`. If no valid credentials are configured in the environment, you must first guide the user to complete login:
 
 ```sh
 tccli auth login
 ```
 
-> 执行后终端会打印授权链接，在用户完成浏览器授权前保持阻塞，授权成功后命令自动结束。
-> 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令。
+> After execution, the terminal will print an authorization link and block until the user completes browser authorization — the command ends automatically upon success.
+> Never ask the user for `SecretId` / `SecretKey`, and do not execute commands that might expose credential contents.
 
-2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
+2. You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
 
-## 场景 A：生成当前安全配置快照
+## Scenario A: Generate Current Security Configuration Snapshot
 
-**触发**：用户说"查一下现在的安全配置"、"帮我整理当前站点的安全策略快照"。
+**Trigger**: User says "check the current security configuration", "help me compile a security policy snapshot for this zone".
 
-围绕同一个 `ZoneId`，顺序调用以下 3 个接口：`DescribeSecurityPolicy`、`DescribeWebSecurityTemplates`、`DescribeSecurityIPGroup`。
+For the same `ZoneId`, call the following 3 APIs in sequence: `DescribeSecurityPolicy`, `DescribeWebSecurityTemplates`, `DescribeSecurityIPGroup`.
 
-**输出建议**：以"当前快照 + 风险提示"的方式回答，在结尾附精简 JSON 快照（见附录格式），便于后续周报继续对比。
+**Output suggestion**: Respond with "current snapshot + risk alerts", appending a concise JSON snapshot at the end (see appendix format) for future report comparisons.
 
-## 场景 B：生成安全防护周报
+## Scenario B: Generate Security Protection Report
 
-**触发**：用户说"帮我出一份本周的安全防护状态报告"、"看看最近有没有安全策略变更"。
+**Trigger**: User says "generate a security status report for this week", "check if there have been any security policy changes recently".
 
-### 流程
+### Process
 
-1. 确认时间范围（默认"本周"），在报告中明确写出起止时间
-2. 顺序调用场景 A 中的 3 个接口，采集当前配置
-3. 如果用户提供了历史基线（上周报告、旧快照或对话中的历史结果），执行差异对比：
+1. Confirm the time range (default "this week"), and explicitly state the start and end time in the report
+2. Call the 3 APIs from Scenario A in sequence to collect the current configuration
+3. If the user provides a historical baseline (last week's report, old snapshot, or historical results from the conversation), perform a diff comparison:
 
-| 对比维度 | 说明 |
+| Comparison Dimension | Description |
 |---|---|
-| 新增项 | 本周新增的策略、模板、IP 组 |
-| 删除项 | 本周删除或解绑的配置 |
-| 修改项 | 本周发生变更的配置项 |
-| 风险升级 | 防护能力被关闭、策略从拦截降级为观察等 |
-| 风险降级 | 防护能力恢复、策略收紧等 |
+| Additions | Policies, templates, IP groups added this week |
+| Deletions | Configurations deleted or unbound this week |
+| Modifications | Configuration items changed this week |
+| Risk escalation | Protection capabilities disabled, policies downgraded from block to observe, etc. |
+| Risk de-escalation | Protection capabilities restored, policies tightened, etc. |
 
-4. 如果**拿不到历史快照**，明确说明"当前仅能生成配置快照，无法判断是否属于异常变更"，将本次结果作为新的基线快照输出
+4. If **no historical snapshot is available**, explicitly state "only a configuration snapshot can be generated at this time — cannot determine whether changes are abnormal", and output the current result as the new baseline snapshot
 
-**输出建议**：按"报告范围 → 当前配置摘要 → 本周变更与风险 → 处理建议 → 附录快照"的结构输出（见输出格式）。
+**Output suggestion**: Structure the output as "Report scope → Current configuration summary → This week's changes & risks → Recommended actions → Appendix snapshot" (see output format).
 
-## 场景 C：风险巡检
+## Scenario C: Risk Inspection
 
-**触发**：用户说"帮我检查安全配置有没有问题"、"有没有高风险配置"。
+**Trigger**: User says "help me check if there are security configuration issues", "are there any high-risk configurations".
 
-在完成场景 A 的数据采集后，重点标记以下异常：
+After completing the data collection from Scenario A, highlight the following anomalies:
 
-- 关键防护能力被关闭
-- 策略从拦截降级为观察或关闭
-- 出现范围过大的放行配置
-- 安全模板未绑定或状态异常
-- IP 组为空、存在异常大网段或测试组长期生效
+- Critical protection capabilities disabled
+- Policies downgraded from block to observe or off
+- Overly broad allow configurations
+- Security templates unbound or in abnormal status
+- IP groups empty, containing overly broad CIDR ranges, or test groups active long-term
 
-> ⚠️ **注意**：不要凭空判断"异常变更"，必须给出与当前配置或历史快照对应的证据。
+> ⚠️ **Note**: Do not declare "abnormal changes" without evidence — you must provide evidence from the current configuration or historical snapshot.
 
-## 输出格式
+## Output Format
+
+> **Language note**: Adapt the report language to match the user's language. The template below is an example — output should be in the same language the user is using.
 
 ```markdown
-## 安全防护报告
+## Security Protection Report
 
-**站点**：example.com（ZoneId: zone-xxx）
-**时间范围**：2026-03-13 ～ 2026-03-19
-**数据来源**：DescribeSecurityPolicy / DescribeWebSecurityTemplates / DescribeSecurityIPGroup
+**Zone**: example.com (ZoneId: zone-xxx)
+**Time Range**: 2026-03-13 – 2026-03-19
+**Data Sources**: `DescribeSecurityPolicy` / `DescribeWebSecurityTemplates` / `DescribeSecurityIPGroup`
 
-### 当前配置摘要
-- 核心防护能力状态：...
-- 模板绑定摘要：...
-- IP 组摘要：...
+### Current Configuration Summary
+- Core protection capability status: ...
+- Template binding summary: ...
+- IP group summary: ...
 
-### 本周变更与风险
-- 本周发现的配置变化：...
-- 疑似异常变更：...
-- 需要人工确认的事项：...
+### This Week's Changes & Risks
+- Configuration changes found this week: ...
+- Suspected abnormal changes: ...
+- Items requiring manual confirmation: ...
 
-### 处理建议
-- 立即处理：...
-- 本周内处理：...
-- 持续观察：...
+### Recommended Actions
+- Immediate action: ...
+- Action within this week: ...
+- Continue monitoring: ...
 ```
 
-### 附录：精简 JSON 快照
+### Appendix: Concise JSON Snapshot
 
-在报告结尾附以下格式的快照，便于后续周报继续对比：
+Append the following format snapshot at the end of the report, for future report comparisons:
 
 ```json
 {

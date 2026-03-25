@@ -1,46 +1,46 @@
-# API 调用环境准备
+# API Calling Environment Setup
 
-EdgeOne API 通过 **tccli**（腾讯云命令行工具）调用。
+EdgeOne APIs are called via **tccli** (Tencent Cloud CLI).
 
-## 1. 选择安装方式
+## 1. Choose an Installation Method
 
-| 方式 | 适用场景 | 前置依赖 |
+| Method | Use Case | Prerequisites |
 |---|---|---|
-| **pipx** | 所有平台，自动隔离环境 | Python 3.8+ |
-| **Homebrew** | macOS | 无需 Python |
+| **pipx** | All platforms, auto-isolated environment | Python 3.8+ |
+| **Homebrew** | macOS | No Python required |
 
-- macOS 且已有 Homebrew → 可直接走 Homebrew 路线，跳到 [步骤 4](#4-安装-tccli)
-- 其他情况 → 走 pipx 路线，继续步骤 2
+- macOS with Homebrew already installed → go directly with the Homebrew route, skip to [Step 4](#4-install-tccli)
+- Otherwise → go with the pipx route, continue to Step 2
 
-## 2. 确保 Python 环境（pipx 路线）
+## 2. Ensure Python Environment (pipx Route)
 
 ```sh
 python3 --version
 ```
 
-若版本 ≥ 3.8，跳到下一步。若命令不存在或版本过低，按系统安装：
+If the version is ≥ 3.8, skip to the next step. If the command is not found or the version is too old, install by OS:
 
 ```sh
-# macOS（通过 Homebrew）
+# macOS (via Homebrew)
 brew install python@3
 
 # Ubuntu / Debian
 apt update && apt install -y python3 python3-pip
 
-# Windows（通过 winget）
+# Windows (via winget)
 winget install Python.Python.3.12
-# 或从官网下载：https://www.python.org/downloads/
+# Or download from: https://www.python.org/downloads/
 ```
 
-安装后运行 `python3 --version` 确认版本 ≥ 3.8。
+After installation, run `python3 --version` to confirm version ≥ 3.8.
 
-## 3. 安装 pipx（pipx 路线）
+## 3. Install pipx (pipx Route)
 
 ```sh
 pipx --version
 ```
 
-若已安装则跳到下一步，否则按系统安装：
+If already installed, skip to the next step; otherwise install by OS:
 
 ```sh
 # macOS
@@ -53,31 +53,31 @@ pip install --user pipx && pipx ensurepath
 pip install --user pipx && pipx ensurepath
 ```
 
-## 4. 安装 tccli
+## 4. Install tccli
 
-### pipx 路线
+### pipx Route
 
 ```sh
 pipx install tccli
 
-# 若从 3.0.252.3 以下版本升级，需先卸载再装：
+# If upgrading from a version below 3.0.252.3, uninstall first then reinstall:
 # pipx uninstall tccli && pipx install tccli
 ```
 
-### Homebrew 路线（仅 macOS）
+### Homebrew Route (macOS Only)
 
 ```sh
 brew tap tencentcloud/tccli
 brew install tccli
-# 更新：brew upgrade tccli
+# Update: brew upgrade tccli
 ```
 
-### 验证
+### Verify
 
 ```sh
 tccli --version
 ```
 
-## 下一步
+## Next Step
 
-安装完成后，请阅读 [auth.md](auth.md) 配置凭证。
+After installation is complete, read [auth.md](auth.md) to configure credentials.

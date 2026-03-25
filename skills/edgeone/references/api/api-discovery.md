@@ -1,24 +1,24 @@
-# EdgeOne API 检索
+# EdgeOne API Discovery
 
-EdgeOne 的 tccli 服务名为 **teo**。
-通常 references 文件已指明需要调用的 API 名称，直接查阅接口文档即可；
-仅在 references 未覆盖时使用兜底检索。
+The tccli service name for EdgeOne is **teo**.
+Typically, reference files already specify the API name to call — just look up the API documentation directly;
+use fallback discovery only when references do not cover the scenario.
 
 ---
 
-## 主流程：已知 API 名称
+## Main Flow: Known API Name
 
-### 1. 阅读接口文档
+### 1. Read the API Documentation
 
-获取具体接口的参数说明与请求示例：
+Get parameter descriptions and request examples for a specific API:
 
 ```sh
 curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/action/CreatePurgeTask.md
 ```
 
-### 2. 阅读数据结构
+### 2. Read Data Structures
 
-接口文档中涉及的复杂数据结构可进一步查看：
+Complex data structures referenced in the API documentation can be further examined:
 
 ```sh
 curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/model/Task.md
@@ -26,29 +26,29 @@ curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/model/Task.md
 
 ---
 
-## 兜底：不确定该调哪个 API
+## Fallback: Not Sure Which API to Call
 
-当 references 未指明接口、或需要探索未覆盖的场景时，按以下顺序检索：
+When references do not specify an API, or you need to explore uncovered scenarios, search in the following order:
 
-### 1. 检索接口列表
+### 1. Search the API List
 
-在接口列表中搜索关键词（Action 名即 `tccli teo` 的第二个参数）：
+Search for keywords in the API list (the Action name is the second argument after `tccli teo`):
 
 ```sh
 curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/actions.md \
-  | grep -i "purge\|缓存"
+  | grep -i "purge\|cache"
 ```
 
-### 2. 检索最佳实践
+### 2. Search Best Practices
 
-查找是否有匹配当前场景的最佳实践（含完整调用示例）：
+Check if there are best practices matching the current scenario (with complete call examples):
 
 ```sh
 curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/practices.md \
-  | grep -i "刷新\|purge"
+  | grep -i "purge\|refresh"
 ```
 
-### 3. 阅读最佳实践详情
+### 3. Read Best Practice Details
 
 ```sh
 curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/practice/practice-53.md

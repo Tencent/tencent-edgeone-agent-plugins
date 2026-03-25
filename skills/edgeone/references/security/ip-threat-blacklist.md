@@ -1,188 +1,190 @@
 # ip-threat-blacklist
 
-基于 EdgeOne 7 层访问数据，分析高集中度威胁 IP，将其写入指定黑名单 IP 组，实现自动化 IP 封禁。
+Analyze high-concentration threat IPs based on EdgeOne L7 access data, write them to a designated blocklist IP group, and automate IP banning.
 
-## 涉及 API
+## APIs Involved
 
-| Action | 说明 |
+| Action | Description |
 |---|---|
-| DescribeTopL7AnalysisData | 查询 7 层流量 Top 数据（按 IP 维度分析访问集中度） |
-| DescribeSecurityIPGroup | 查询站点下安全 IP 组列表（用于确认目标黑名单组） |
-| ModifySecurityIPGroup | 修改安全 IP 组条目（写入黑名单 IP） |
+| `DescribeTopL7AnalysisData` | Query L7 traffic Top data (analyze access concentration by IP dimension) |
+| `DescribeSecurityIPGroup` | Query the security IP group list under the zone (confirm target blocklist group) |
+| `ModifySecurityIPGroup` | Modify security IP group entries (write blocklist IPs) |
 
-> **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
+> **Command usage**: This document only lists API names and process guidelines.
+> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm the complete parameters and response descriptions.
 
-## 前置条件
+## Prerequisites
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行。如果环境中尚未配置可用凭证，必须先引导用户完成登录：
+1. All Tencent Cloud API calls are executed via `tccli`. If no valid credentials are configured in the environment, you must first guide the user to complete login:
 
 ```sh
 tccli auth login
 ```
 
-> 执行后终端会打印授权链接，在用户完成浏览器授权前保持阻塞，授权成功后命令自动结束。
-> 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令。
+> After execution, the terminal will print an authorization link and block until the user completes browser authorization — the command ends automatically upon success.
+> Never ask the user for `SecretId` / `SecretKey`, and do not execute commands that might expose credential contents.
 
-2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
+2. You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
 
-3. **写操作安全红线**：
-   - 执行 `ModifySecurityIPGroup` 前，**必须**向用户展示完整的变更 Diff，并等待用户明确确认后才能执行。
-   - **只允许写入用户指定的黑名单 IP 组**，严禁自行选择或创建 IP 组。
-   - 如果用户未明确指定目标 IP 组，必须先引导用户通过 [domain-blacklist-inspector.md](domain-blacklist-inspector.md) 查清目标黑名单组 ID，再继续操作。
+3. **Write operation security red lines**:
+   - Before executing `ModifySecurityIPGroup`, you **must** show the complete change Diff to the user and wait for explicit confirmation before executing.
+   - **Only write to the blocklist IP group specified by the user** — never select or create an IP group on your own.
+   - If the user has not explicitly specified a target IP group, guide them to first use [domain-blacklist-inspector.md](domain-blacklist-inspector.md) to identify the target blocklist group ID before proceeding.
 
-## 场景 A：分析高集中度威胁 IP
+## Scenario A: Analyze High-Concentration Threat IPs
 
-**触发**：用户说"帮我分析最近的攻击 IP 集中度"、"哪些 IP 访问量异常"、"帮我看看有没有可疑 IP"。
+**Trigger**: User says "help me analyze recent attack IP concentration", "which IPs have abnormal access volume", "help me check for suspicious IPs".
 
-### 流程
+### Process
 
-1. 确认分析时间范围（默认"最近 24 小时"），在报告中明确写出起止时间
-2. 调用 `DescribeTopL7AnalysisData` 接口，按 IP 维度查询 Top 访问数据：
-   - 指标建议选择请求数（`l7Flow_request`）或带宽（`l7Flow_flux`）
-   - 返回结果按请求量降序排列，取 Top N（默认 Top 20）
-3. 对返回的 IP 列表进行集中度分析：
+1. Confirm the analysis time range (default "last 24 hours"), and explicitly state the start and end time in the report
+2. Call the `DescribeTopL7AnalysisData` API, querying Top access data by IP dimension:
+   - Recommended metrics: request count (`l7Flow_request`) or bandwidth (`l7Flow_flux`)
+   - Results are sorted by request volume in descending order, take Top N (default Top 20)
+3. Perform concentration analysis on the returned IP list:
 
-| 分析维度 | 说明 |
+| Analysis Dimension | Description |
 |---|---|
-| 请求占比 | 单 IP 请求量 / 总请求量，占比过高（如 > 5%）视为异常集中 |
-| 请求速率 | 单 IP 在时间窗口内的平均 QPS，远超正常水平视为可疑 |
-| 集中度排名 | Top 1 IP 与 Top 10 IP 的请求量差距，差距悬殊说明存在单点集中攻击 |
+| Request share | Single IP request count / total requests — a high share (e.g., > 5%) indicates abnormal concentration |
+| Request rate | Average QPS for a single IP within the time window — significantly exceeding normal levels is suspicious |
+| Concentration ranking | Gap between Top 1 IP and Top 10 IP request volumes — a large gap suggests a single-point concentrated attack |
 
-4. 输出分析报告，标记疑似威胁 IP，并询问用户是否需要执行拉黑操作
+4. Output the analysis report, flag suspected threat IPs, and ask the user whether to proceed with banning
 
-**输出建议**：以"Top IP 列表 + 集中度分析 + 威胁判断"的方式回答，在结尾提示用户是否进入场景 B 执行拉黑。
+**Output suggestion**: Respond with "Top IP list + concentration analysis + threat assessment", and at the end prompt the user whether to enter Scenario B for banning.
 
-## 场景 B：执行 IP 黑名单拉黑
+## Scenario B: Execute IP Blocklist Banning
 
-**触发**：用户说"把这些 IP 拉黑"、"IP 封禁"、"把 Top 攻击 IP 加入黑名单"。
+**Trigger**: User says "block these IPs", "IP ban", "add top attack IPs to blocklist".
 
-> ⚠️ **本场景包含写操作，必须严格执行二次确认流程，不得跳过。**
+> ⚠️ **This scenario involves write operations — the double confirmation process must be strictly followed and cannot be skipped.**
 
-### 流程
+### Process
 
-#### 第一步：确认目标黑名单 IP 组
+#### Step 1: Confirm Target Blocklist IP Group
 
-1. 询问用户要写入哪个黑名单 IP 组（必须由用户明确指定，不得自行决定）
-2. 如果用户不清楚目标 IP 组，引导其先执行 [domain-blacklist-inspector.md](domain-blacklist-inspector.md) 查询
-3. 调用 `DescribeSecurityIPGroup` 接口，查询并展示目标 IP 组的当前状态（名称、ID、现有条目数）
+1. Ask the user which blocklist IP group to write to (must be explicitly specified by the user — never decide on your own)
+2. If the user is unsure about the target IP group, guide them to first execute [domain-blacklist-inspector.md](domain-blacklist-inspector.md) to look it up
+3. Call the `DescribeSecurityIPGroup` API to query and display the target IP group's current status (name, ID, existing entry count)
 
-#### 第二步：确认待拉黑 IP 列表
+#### Step 2: Confirm IPs to Be Blocked
 
-1. 如果用户来自场景 A，使用场景 A 分析出的威胁 IP 列表
-2. 如果用户直接提供了 IP 列表，原样使用
-3. 对待拉黑 IP 列表进行基本校验：
-   - 格式校验：确保每条记录是合法的 IP 地址或 CIDR（如 `1.2.3.4` 或 `1.2.3.0/24`）
-   - 重复检查：过滤掉目标 IP 组中已存在的条目，避免重复写入
-   - 范围警告：如果存在 `/8`、`/16` 等大网段 CIDR，必须单独提示用户确认
+1. If the user is coming from Scenario A, use the threat IP list analyzed in Scenario A
+2. If the user directly provides an IP list, use it as-is
+3. Perform basic validation on the IP list to be blocked:
+   - Format validation: Ensure each entry is a valid IP address or CIDR (e.g., `1.2.3.4` or `1.2.3.0/24`)
+   - Duplicate check: Filter out entries already existing in the target IP group to avoid duplicate writes
+   - Range warning: If large CIDR ranges like `/8` or `/16` exist, specifically alert the user for confirmation
 
-#### 第三步：展示变更 Diff + 二次确认
+#### Step 3: Display Change Diff + Double Confirmation
 
-在执行写操作前，**必须**向用户展示以下 Diff 信息：
+Before executing the write operation, you **must** show the following Diff to the user:
 
 ```
-即将对 IP 组执行以下变更：
+The following changes will be applied to the IP group:
 
-目标 IP 组：<IP 组名称>（ID: ipg-xxxxxxxx）
-当前条目数：N 条
+Target IP group: <IP group name> (ID: ipg-xxxxxxxx)
+Current entry count: N entries
 
-新增条目（共 M 条）：
+New entries (M total):
   + 1.2.3.4
   + 5.6.7.8
   + 9.10.11.0/24
   ...
 
-变更后条目数：N + M 条
+Entry count after change: N + M entries
 
-⚠️ 此操作将立即生效，被拉黑 IP 的请求将被拦截。
-请确认是否继续？（是/否）
+⚠️ This operation takes effect immediately — requests from blocked IPs will be intercepted.
+Do you want to proceed? (Yes/No)
 ```
 
-**必须等待用户明确回复"是"或"确认"后，才能调用 `ModifySecurityIPGroup`。**
+**You must wait for the user to explicitly reply "Yes" or "Confirm" before calling `ModifySecurityIPGroup`.**
 
-#### 第四步：执行写入并验证
+#### Step 4: Execute Write and Verify
 
-1. 调用 `ModifySecurityIPGroup` 接口，将新增 IP 写入目标黑名单组
-2. 写入完成后，再次调用 `DescribeSecurityIPGroup` 查询目标 IP 组，验证条目数是否符合预期
-3. 输出操作结果摘要
+1. Call the `ModifySecurityIPGroup` API to write the new IPs to the target blocklist group
+2. After writing, call `DescribeSecurityIPGroup` again to query the target IP group and verify the entry count matches expectations
+3. Output the operation result summary
 
-## 场景 C：查询当前黑名单 IP 组状态
+## Scenario C: Query Current Blocklist IP Group Status
 
-**触发**：用户说"查一下黑名单里有哪些 IP"、"现在黑名单组里有多少条目"。
+**Trigger**: User says "check what IPs are in the blocklist", "how many entries are in the blocklist group now".
 
-调用 `DescribeSecurityIPGroup` 接口，查询并展示指定 IP 组的当前条目列表。
+Call the `DescribeSecurityIPGroup` API to query and display the current entry list of the specified IP group.
 
-> 如需查询某个域名关联的黑名单 IP 组 ID，请参考 [domain-blacklist-inspector.md](domain-blacklist-inspector.md)。
+> To find the blocklist IP group ID associated with a domain, see [domain-blacklist-inspector.md](domain-blacklist-inspector.md).
 
-## 输出格式
+## Output Format
 
-### 场景 A：威胁 IP 分析报告
+> **Language note**: Adapt the report language to match the user's language. The templates below are examples — output should be in the same language the user is using.
+
+### Scenario A: Threat IP Analysis Report
 
 ```markdown
-## 威胁 IP 集中度分析报告
+## Threat IP Concentration Analysis Report
 
-**站点**：example.com（ZoneId: zone-xxx）
-**分析时间范围**：2026-03-16 00:00 ～ 2026-03-23 00:00
-**数据来源**：DescribeTopL7AnalysisData（指标：请求数）
+**Zone**: example.com (ZoneId: zone-xxx)
+**Analysis Time Range**: 2026-03-16 00:00 – 2026-03-23 00:00
+**Data Source**: `DescribeTopL7AnalysisData` (Metric: request count)
 
-### Top IP 访问排名
+### Top IP Access Ranking
 
-| 排名 | IP 地址 | 请求数 | 占总量比例 | 平均 QPS | 威胁判断 |
+| Rank | IP Address | Request Count | Share of Total | Avg QPS | Threat Assessment |
 |---|---|---|---|---|---|
-| 1 | 1.2.3.4 | 1,200,000 | 12.5% | 1,984/s | 🔴 高危 |
-| 2 | 5.6.7.8 | 800,000 | 8.3% | 1,322/s | 🔴 高危 |
-| 3 | 9.10.11.12 | 200,000 | 2.1% | 330/s | 🟡 可疑 |
+| 1 | 1.2.3.4 | 1,200,000 | 12.5% | 1,984/s | 🔴 High risk |
+| 2 | 5.6.7.8 | 800,000 | 8.3% | 1,322/s | 🔴 High risk |
+| 3 | 9.10.11.12 | 200,000 | 2.1% | 330/s | 🟡 Suspicious |
 | ... | ... | ... | ... | ... | ... |
 
-### 集中度分析
+### Concentration Analysis
 
-- 总请求量：9,600,000 次
-- Top 1 IP 占比：12.5%（超过 5% 阈值，异常集中）
-- Top 3 IP 合计占比：22.9%
-- 集中度评估：**存在明显单点集中攻击迹象**
+- Total requests: 9,600,000
+- Top 1 IP share: 12.5% (exceeds 5% threshold — abnormally concentrated)
+- Top 3 IPs combined share: 22.9%
+- Concentration assessment: **Clear signs of single-point concentrated attack**
 
-### 建议拉黑 IP 列表
+### Suggested IPs to Block
 
-以下 IP 请求占比超过阈值或 QPS 异常，建议加入黑名单：
+The following IPs have request share exceeding the threshold or abnormal QPS — recommended for blocklist:
 
-- `1.2.3.4`（占比 12.5%，QPS 1,984/s）
-- `5.6.7.8`（占比 8.3%，QPS 1,322/s）
+- `1.2.3.4` (share 12.5%, QPS 1,984/s)
+- `5.6.7.8` (share 8.3%, QPS 1,322/s)
 
-> 如需将上述 IP 加入黑名单，请告知目标黑名单 IP 组，或回复"拉黑"继续操作。
+> To add the above IPs to the blocklist, specify the target blocklist IP group, or reply "block" to proceed.
 ```
 
-### 场景 B：拉黑操作结果
+### Scenario B: Banning Operation Result
 
 ```markdown
-## IP 黑名单写入结果
+## IP Blocklist Write Result
 
-**目标 IP 组**：blacklist-prod（ID: ipg-xxxxxxxx）
-**操作时间**：2026-03-23 19:00:00
-**数据来源**：ModifySecurityIPGroup
+**Target IP Group**: blacklist-prod (ID: ipg-xxxxxxxx)
+**Operation Time**: 2026-03-23 19:00:00
+**Data Source**: `ModifySecurityIPGroup`
 
-### 变更摘要
+### Change Summary
 
-| 项目 | 数值 |
+| Item | Count |
 |---|---|
-| 新增条目数 | 2 |
-| 跳过（已存在）| 0 |
-| 操作后总条目数 | 44 |
+| New entries added | 2 |
+| Skipped (already exist) | 0 |
+| Total entries after operation | 44 |
 
-### 新增条目明细
+### New Entry Details
 
-| IP / CIDR | 来源 | 备注 |
+| IP / CIDR | Source | Notes |
 |---|---|---|
-| 1.2.3.4 | Top L7 分析 | 请求占比 12.5% |
-| 5.6.7.8 | Top L7 分析 | 请求占比 8.3% |
+| 1.2.3.4 | Top L7 analysis | Request share 12.5% |
+| 5.6.7.8 | Top L7 analysis | Request share 8.3% |
 
-### 验证结果
+### Verification Result
 
-✅ 写入成功，IP 组当前条目数为 44 条，与预期一致。
+✅ Write successful — IP group currently has 44 entries, matching expectations.
 ```
 
-## 注意事项
+## Important Notes
 
-> ⚠️ **操作安全提示**：
-> - `ModifySecurityIPGroup` 为**全量覆盖**接口，调用时需传入 IP 组的完整条目列表（现有条目 + 新增条目），而非仅传入新增部分。执行前务必先查询现有条目，合并后再写入，**严禁直接覆盖导致现有条目丢失**。
-> - 拉黑操作立即生效，被封禁 IP 的请求将被实时拦截，请在确认威胁 IP 后再执行。
-> - 如需批量拉黑大量 IP（如超过 50 条），建议编写脚本一次性执行，避免多次调用遗漏。
+> ⚠️ **Operation safety notice**:
+> - `ModifySecurityIPGroup` is a **full overwrite** API — when calling it, you must pass the complete entry list of the IP group (existing entries + new entries), not just the new entries. Always query existing entries first, merge them, then write — **never overwrite directly and lose existing entries**.
+> - Banning takes effect immediately — requests from banned IPs will be intercepted in real time. Execute only after confirming threat IPs.
+> - For bulk banning of many IPs (e.g., more than 50), prefer writing a script for one-time execution to avoid omissions from multiple calls.

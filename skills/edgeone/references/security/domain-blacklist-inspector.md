@@ -1,97 +1,99 @@
 # domain-blacklist-inspector
 
-查询 EdgeOne 指定域名关联的安全策略，解析策略规则中 `action=block` 的 IP 组引用，输出黑名单 IP 组映射报告。
+Query the security policies associated with a specified EdgeOne domain, parse IP group references in rules with `action=block`, and output a blocklist IP group mapping report.
 
-> **定位说明**：本 Skill 是写操作（如 `eo-ip-threat-blacklist`）的**前置诊断步骤**。在向黑名单 IP 组写入条目之前，应先用本 Skill 查清楚目标黑名单组 ID，避免误操作错误的 IP 组。
+> **Purpose**: This skill is a **prerequisite diagnostic step** for write operations (such as `eo-ip-threat-blacklist`). Before writing entries to a blocklist IP group, use this skill to identify the correct target blocklist group ID to avoid operating on the wrong IP group.
 
-## 涉及 API
+## APIs Involved
 
-| Action | 说明 |
+| Action | Description |
 |---|---|
-| DescribeSecurityPolicy | 查询域名关联的安全策略配置 |
-| DescribeSecurityIPGroup | 查询站点下所有 IP 组列表 |
-| DescribeSecurityIPGroupContent | 查询指定 IP 组的详细条目 |
+| `DescribeSecurityPolicy` | Query the security policy configuration associated with a domain |
+| `DescribeSecurityIPGroup` | Query all IP groups under the zone |
+| `DescribeSecurityIPGroupContent` | Query detailed entries of a specified IP group |
 
-> **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
+> **Command usage**: This document only lists API names and process guidelines.
+> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm the complete parameters and response descriptions.
 
-## 前置条件
+## Prerequisites
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行，执行前请确认已完成登录鉴权。
+1. All Tencent Cloud API calls are executed via `tccli` — confirm login authentication is complete before execution.
 
-2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
-3. 用户必须明确提供目标域名（如 `example.com`）；如果用户只说"这个域名"而未给出具体值，需要先追问确认。
+2. You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
+3. The user must explicitly provide the target domain (e.g., `example.com`); if the user says "this domain" without specifying, ask for clarification first.
 
-## 执行流程
+## Execution Flow
 
-**触发**：用户说"查一下 example.com 的安全策略里哪个 IP 组是黑名单"、"这个域名的拦截 IP 组是哪个"、"帮我看看 example.com 的 IP 封禁列表"、"我要往黑名单加 IP，先帮我查一下黑名单组"。
+**Trigger**: User says "check which IP group in example.com's security policy is a blocklist", "which IP group blocks traffic for this domain", "help me check example.com's IP ban list", "I want to add IPs to the blocklist — first help me identify the blocklist group".
 
-按以下顺序调用接口，构建黑名单 IP 组映射报告：
+Call the following APIs in order to build the blocklist IP group mapping report:
 
-### 第一步：获取域名关联的安全策略
+### Step 1: Get the Security Policy Associated with the Domain
 
-调用 `DescribeSecurityPolicy` 接口，从返回结果中提取所有规则，识别其中具有**拦截或封禁语义**的规则（例如 `action=block`、`Action.Name=Deny` 等，需根据字段值的实际含义自行判断），记录这些规则引用的 IP 组 ID。
+Call the `DescribeSecurityPolicy` API, extract all rules from the result, identify rules with **blocking or banning semantics** (e.g., `action=block`, `Action.Name=Deny`, etc. — determine based on the actual meaning of field values), and record the IP group IDs referenced by these rules.
 
-### 第二步：获取站点下所有 IP 组列表
+### Step 2: Get All IP Groups Under the Zone
 
-调用 `DescribeSecurityIPGroup` 接口，将第一步中识别出的 IP 组 ID 与此列表对照，补全 IP 组名称等元信息。
+Call the `DescribeSecurityIPGroup` API, cross-reference the IP group IDs identified in Step 1 with this list to fill in metadata like IP group names.
 
-### 第三步：查询黑名单 IP 组的详细条目
+### Step 3: Query Detailed Entries of Blocklist IP Groups
 
-对第一步中识别出的每个黑名单 IP 组，逐一调用 `DescribeSecurityIPGroupContent` 接口查询其详细内容。
+For each blocklist IP group identified in Step 1, call the `DescribeSecurityIPGroupContent` API to query its detailed contents.
 
-### 黑名单 IP 组识别规则
+### Blocklist IP Group Identification Rules
 
-**以规则动作为主要判断依据**：
+**Use rule action as the primary criterion**:
 
-- **确认为黑名单组**：被安全策略中 `action=block` 的规则直接引用的 IP 组
-- **辅助参考**：IP 组名称包含 `blacklist`、`blocklist`、`deny`、`黑名单`、`封禁` 等语义关键词，可作为辅助说明，但不能作为唯一判断依据
+- **Confirmed as blocklist group**: IP groups directly referenced by `action=block` rules in security policies
+- **Auxiliary reference**: IP group names containing semantic keywords like `blacklist`, `blocklist`, `deny`, or localized equivalents can serve as supplementary evidence, but should not be the sole criterion
 
-> ⚠️ **注意**：
-> - 不要仅凭 IP 组名称判断，必须结合安全策略中的规则动作进行确认。
-> - 如果存在多个 IP 组均被 `action=block` 规则引用，应全部列出并说明各自对应的规则上下文。
-> - 如果无法明确判断，如实说明并列出所有被拦截规则引用的 IP 组供用户人工确认。
+> ⚠️ **Note**:
+> - Do not judge solely by IP group name — must verify against rule actions in security policies.
+> - If multiple IP groups are referenced by `action=block` rules, list them all and explain the rule context for each.
+> - If determination is unclear, state this honestly and list all IP groups referenced by blocking rules for the user to manually confirm.
 
-## 输出格式
+## Output Format
+
+> **Language note**: Adapt the report language to match the user's language. The template below is an example — output should be in the same language the user is using.
 
 ```markdown
-## 黑名单 IP 组查询结果
+## Blocklist IP Group Query Results
 
-**域名**：example.com（ZoneId: zone-xxx）
-**查询时间**：YYYY-MM-DD
-**数据来源**：DescribeSecurityPolicy / DescribeSecurityIPGroup / DescribeSecurityIPGroupContent
+**Domain**: example.com (ZoneId: zone-xxx)
+**Query Date**: YYYY-MM-DD
+**Data Sources**: `DescribeSecurityPolicy` / `DescribeSecurityIPGroup` / `DescribeSecurityIPGroupContent`
 
-### 黑名单 IP 组（action=block 规则引用）
+### Blocklist IP Groups (Referenced by action=block Rules)
 
-> 以下 IP 组被安全策略中的拦截规则直接引用，是本域名的黑名单 IP 组：
+> The following IP groups are directly referenced by blocking rules in the security policy — they are the blocklist IP groups for this domain:
 
-| IP 组名称 | **IP 组 ID** | 条目数 | 关联规则 ID | 规则动作 |
+| IP Group Name | **IP Group ID** | Entry Count | Associated Rule ID | Rule Action |
 |---|---|---|---|---|
 | blacklist-prod | **ipg-xxxxxxxx** | 42 | rule-001 | Block |
 
-> 如需向上述 IP 组写入条目，请使用 IP 组 ID：`ipg-xxxxxxxx`
+> To write entries to the above IP group, use IP Group ID: `ipg-xxxxxxxx`
 
-### IP 组详细条目
+### IP Group Detailed Entries
 
-**blacklist-prod**（ipg-xxxxxxxx）
+**blacklist-prod** (ipg-xxxxxxxx)
 
-| 序号 | IP / CIDR | 备注 |
+| # | IP / CIDR | Notes |
 |---|---|---|
 | 1 | 1.2.3.4 | ... |
 | 2 | 5.6.7.8/24 | ... |
 
-> 如果条目超过 20 条，展示前 20 条并注明"共 N 条，仅展示前 20 条"。
+> If there are more than 20 entries, show the first 20 and note "N total entries, showing first 20".
 
-### 安全策略关联规则摘要
+### Security Policy Associated Rules Summary
 
-| 规则 ID | 规则名称 | 动作 | 引用 IP 组 | 备注 |
+| Rule ID | Rule Name | Action | Referenced IP Group | Notes |
 |---|---|---|---|---|
-| rule-001 | 黑名单拦截 | Block | blacklist-prod | ... |
+| rule-001 | Blocklist Block | Block | blacklist-prod | ... |
 
-### 补充说明（如有）
+### Additional Notes (if any)
 
-- 异常条目说明（如 IP 组为空、存在过于宽泛的 CIDR 如 `0.0.0.0/0` 等）
-- 其他值得关注的拦截规则
+- Anomalous entry notes (e.g., empty IP group, overly broad CIDR like `0.0.0.0/0`, etc.)
+- Other noteworthy blocking rules
 ```
 
-> **只读声明**：本技能仅执行查询操作，不进行任何 IP 组修改或策略变更。如需修改黑名单，请在控制台操作或调用相应写接口，操作前请确认影响范围。
+> **Read-only disclaimer**: This skill only performs query operations and does not modify any IP groups or policy configurations. To modify blocklists, use the console or call the appropriate write APIs — confirm the impact scope before operating.

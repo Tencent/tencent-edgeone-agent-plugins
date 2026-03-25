@@ -1,26 +1,26 @@
-# EdgeOne Agent Plugins 安装指引
+# EdgeOne Agent Plugins Installation Guide
 
-## 前置条件
+## Prerequisites
 
-- 已安装 **Git**
+- **Git** installed
 
-## 安装步骤
+## Installation Steps
 
-### 第一步：克隆仓库
+### Step 1: Clone the Repository
 
-将 EdgeOne Agent Plugins 仓库克隆到本地：
+Clone the EdgeOne Agent Plugins repository to your local machine:
 
 ```bash
 # macOS / Linux
-git clone https://github.com/user/edgeone-agent-plugins.git ~/.edgeone-agent-plugins
+git clone https://github.com/TencentEdgeOne/edgeone-agent-plugins.git ~/.edgeone-agent-plugins
 
 # Windows (PowerShell)
-git clone https://github.com/user/edgeone-agent-plugins.git "$env:USERPROFILE\.edgeone-agent-plugins"
+git clone https://github.com/TencentEdgeOne/edgeone-agent-plugins.git "$env:USERPROFILE\.edgeone-agent-plugins"
 ```
 
-### 第二步：创建 Skill 链接
+### Step 2: Create Skill Symlinks
 
-根据你使用的 AI 工具，将 skill 文件链接到对应的目录。
+Link the skill files to the appropriate directory based on the AI tool you are using.
 
 #### OpenAI Codex
 
@@ -29,7 +29,7 @@ git clone https://github.com/user/edgeone-agent-plugins.git "$env:USERPROFILE\.e
 mkdir -p ~/.agents/skills
 ln -s ~/.edgeone-agent-plugins/skills/edgeone ~/.agents/skills/edgeone
 
-# Windows (PowerShell, 需要管理员权限)
+# Windows (PowerShell, requires administrator privileges)
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
 cmd /c mklink /J "$env:USERPROFILE\.agents\skills\edgeone" "$env:USERPROFILE\.edgeone-agent-plugins\skills\edgeone"
 ```
@@ -41,7 +41,7 @@ cmd /c mklink /J "$env:USERPROFILE\.agents\skills\edgeone" "$env:USERPROFILE\.ed
 mkdir -p ~/.gemini/skills
 ln -s ~/.edgeone-agent-plugins/skills/edgeone ~/.gemini/skills/edgeone
 
-# Windows (PowerShell, 需要管理员权限)
+# Windows (PowerShell, requires administrator privileges)
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.gemini\skills"
 cmd /c mklink /J "$env:USERPROFILE\.gemini\skills\edgeone" "$env:USERPROFILE\.edgeone-agent-plugins\skills\edgeone"
 ```
@@ -53,82 +53,82 @@ cmd /c mklink /J "$env:USERPROFILE\.gemini\skills\edgeone" "$env:USERPROFILE\.ed
 mkdir -p ~/.opencode/skills
 ln -s ~/.edgeone-agent-plugins/skills/edgeone ~/.opencode/skills/edgeone
 
-# Windows (PowerShell, 需要管理员权限)
+# Windows (PowerShell, requires administrator privileges)
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.opencode\skills"
 cmd /c mklink /J "$env:USERPROFILE\.opencode\skills\edgeone" "$env:USERPROFILE\.edgeone-agent-plugins\skills\edgeone"
 ```
 
-#### Claude Code（手动安装）
+#### Claude Code (Manual Installation)
 
 ```bash
 # macOS / Linux
 mkdir -p ~/.claude/skills
 ln -s ~/.edgeone-agent-plugins/skills/edgeone ~/.claude/skills/edgeone
 
-# Windows (PowerShell, 需要管理员权限)
+# Windows (PowerShell, requires administrator privileges)
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills"
 cmd /c mklink /J "$env:USERPROFILE\.claude\skills\edgeone" "$env:USERPROFILE\.edgeone-agent-plugins\skills\edgeone"
 ```
 
 #### Cursor
 
-Cursor 使用本地插件目录加载插件，需要链接整个仓库（而非仅 `skills/edgeone`）：
+Cursor loads plugins from a local plugin directory, so you need to symlink the entire repository (not just `skills/edgeone`):
 
 ```bash
 # macOS / Linux
 ln -s ~/.edgeone-agent-plugins ~/.cursor/plugins/local/edgeone-agent-plugins
 
-# Windows (PowerShell, 需要管理员权限)
+# Windows (PowerShell, requires administrator privileges)
 cmd /c mklink /J "$env:USERPROFILE\.cursor\plugins\local\edgeone-agent-plugins" "$env:USERPROFILE\.edgeone-agent-plugins"
 ```
 
-> **注意**：Cursor 也可以通过直接克隆到插件目录来安装，跳过第一步：
+> **Note**: You can also install Cursor by cloning directly into the plugin directory, skipping Step 1:
 > ```bash
 > git clone https://github.com/TencentEdgeOne/edgeone-agent-plugins.git ~/.cursor/plugins/local/edgeone-agent-plugins
 > ```
 
-#### 其他 Agent 工具
+#### Other Agent Tools
 
-如果你使用的工具不在上述列表中，请将 `skills/edgeone` 目录复制或链接到该工具的 skill 加载目录下。通常是 `~/.<tool-name>/skills/` 或类似路径，请参考你的工具文档。
+If your tool is not listed above, copy or symlink the `skills/edgeone` directory to the tool's skill loading directory. This is typically `~/.<tool-name>/skills/` or a similar path — refer to your tool's documentation for details.
 
-### 第三步：重启你的 Agent
+### Step 3: Restart Your Agent
 
-退出并重新启动你的 AI 工具，使其发现新安装的 skill。
+Quit and restart your AI tool so it can discover the newly installed skill.
 
-## 验证安装
+## Verify Installation
 
-安装完成后，可以通过以下方式验证：
+After installation, you can verify it by running:
 
 ```bash
-# 检查符号链接是否有效
+# Check that the symlink is valid
 ls -la ~/.agents/skills/edgeone  # Codex
 ls -la ~/.gemini/skills/edgeone  # Gemini CLI
 ls -la ~/.claude/skills/edgeone  # Claude Code
 ```
 
-然后在你的 Agent 中尝试以下对话来触发 skill：
+Then try the following prompts in your Agent to trigger the skill:
 
-- 「帮我查一下 EdgeOne 站点列表」
-- 「帮我把 example.com 接入 EdgeOne」
-- 「出一份安全周报」
+- "List my EdgeOne sites"
+- "Onboard example.com to EdgeOne"
+- "Generate a security weekly report"
 
-如果 Agent 能够识别并加载 EdgeOne skill，说明安装成功。
+If the Agent recognizes and loads the EdgeOne skill, the installation was successful.
 
-## 更新
+## Update
 
-进入仓库目录拉取最新代码即可，符号链接会自动指向更新后的内容：
+Navigate to the repository directory and pull the latest code — the symlink will automatically point to the updated content:
 
 ```bash
 cd ~/.edgeone-agent-plugins
 git pull
 ```
 
-## 卸载
+## Uninstall
 
 ```bash
-# 删除符号链接（以 Codex 为例，其他工具替换对应路径）
+# Remove the symlink (using Codex as an example; replace the path for other tools)
 rm ~/.agents/skills/edgeone
 
-# （可选）删除克隆的仓库
+# (Optional) Remove the cloned repository
 rm -rf ~/.edgeone-agent-plugins
 ```
