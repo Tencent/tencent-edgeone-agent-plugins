@@ -1,29 +1,10 @@
 # eo-log-analyzer
 
-Users describe a fault time period and domain to automatically download logs, parse them locally, extract anomaly details, and provide pattern recognition conclusions with fault inference recommendations. This is an upgrade from [eo-log-downloader.md](eo-log-downloader.md), which only provides download links — this scenario further completes log parsing and analysis.
+Users describe a fault time period and domain to automatically download logs, parse them locally, extract anomaly details, and provide pattern recognition conclusions with fault inference recommendations. Also supports traffic aggregation analysis (e.g., per-URL download volume breakdown). This is an upgrade from [eo-log-downloader.md](eo-log-downloader.md), which only provides download links — this scenario further completes log parsing and analysis.
 
-## APIs Involved
+## APIs & Prerequisites
 
-| Action | Description |
-|---|---|
-| DownloadL7Logs | Retrieve L7 offline log download links |
-| DownloadL4Logs | Retrieve L4 offline log download links (when analyzing L4 logs) |
-
-> **Command usage**: This document only lists API names and workflow guidance.
-> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm complete parameters and response descriptions.
-
-## Prerequisites
-
-1. All Tencent Cloud API calls are executed via `tccli`. If no valid credentials are configured in the environment, guide the user to log in first:
-
-```sh
-tccli auth login
-```
-
-> The terminal will print an authorization link after execution and remain blocked until the user completes browser authorization, after which the command ends automatically.
-> Never ask the user for `SecretId` / `SecretKey`, and do not execute any commands that could expose credential contents.
-
-2. ZoneId must be obtained first. Refer to [../api/zone-discovery.md](../api/zone-discovery.md).
+Same as [eo-log-downloader.md](eo-log-downloader.md) — this scenario uses the same APIs (`DownloadL7Logs`, `DownloadL4Logs`, `DescribeAccelerationDomains`) and the same prerequisites (`tccli` authentication + ZoneId discovery). Refer to that document for full details.
 
 ## Special Design Notes
 
@@ -46,12 +27,66 @@ tccli auth login
 
 **Step 2**: Download log files
 
-Call `DownloadL7Logs` to get the log download links for the corresponding time period, then download:
+Confirm the domain, retrieve download links, and download locally:
+
+- If the user specified a subdomain (e.g., `www.example.com`), use it directly in the `Domains` parameter
+- If the user did not specify a domain, or provided a **root domain** (matching the `ZoneName` from `DescribeZones`), follow [eo-log-downloader.md Scenario A Step 2](eo-log-downloader.md) to call `DescribeAccelerationDomains` and discover subdomains first, then either let the user choose or omit `Domains` to download all
+
+Call `DownloadL7Logs` with `StartTime`, `EndTime`, `ZoneIds`, and optionally `Domains`. Then download and decompress:
 - Use `curl` or `wget` to download log files to a local temporary directory
 - Log files are typically in `.gz` compressed format; use `gunzip` to decompress
-- Log fields are tab-separated
+- ⚠️ **Log format is JSON Lines** (one JSON object per line, newline-separated). Each line is a self-contained JSON object. Do NOT parse as tab-separated or CSV.
 
 > If there are many or large log files, prioritize downloading files that cover the user's time period of interest to avoid unnecessary bulk downloads.
+
+> **If results are empty**, follow the troubleshooting steps in [eo-log-downloader.md Scenario A — Troubleshooting Empty Results](eo-log-downloader.md) (domain mismatch, time too recent, no traffic, wrong zone).
+
+#### L7 Offline Log Field Reference
+
+The following fields are available in offline logs (subset of all L7 fields). For the full field list, see [L7 Access Logs](https://edgeone.ai/document/61300).
+
+| Field | Type | Description | Common Use |
+|---|---|---|---|
+| `RequestTime` | ISO8601 | Time the request was received (UTC+0) | Time-window aggregation |
+| `RequestHost` | String | Requested hostname (subdomain) | Group by domain |
+| `RequestUrl` | String | URL path (without query string) | Group by resource/URI |
+| `RequestUrlQueryString` | String | Query string portion of the URL | Full URL reconstruction |
+| `RequestMethod` | String | HTTP method (GET/POST/...) | Filter by method |
+| `RequestBytes` | Integer | Total bytes sent from client to edge (headers + body + SSL) | Inbound traffic |
+| `EdgeResponseStatusCode` | Integer | Status code returned to client | Error filtering (4xx/5xx) |
+| `EdgeResponseBytes` | Integer | Total bytes sent from edge to client (headers + body + SSL) | **Outbound traffic / download volume** |
+| `EdgeResponseBodyBytes` | Integer | Response body bytes only (no headers) | Content-only traffic |
+| `EdgeCacheStatus` | String | Cache hit status: `hit` / `miss` / `dynamic` / `other` | Cache analysis |
+| `EdgeInternalTime` | Integer | Time to first byte (ms) | Latency analysis |
+| `EdgeResponseTime` | Integer | Time to last byte (ms) | Full response latency |
+| `ClientIP` | String | Client IP address | IP concentration analysis |
+| `ClientRegion` | String | Client country/region (ISO 3166-1 alpha-2) | Geographic analysis |
+| `EdgeServerIP` | String | Edge node IP | Node-level analysis |
+| `RequestUA` | String | User-Agent | Bot/crawler identification |
+| `RequestReferer` | String | Referer header | Traffic source analysis |
+
+> **Parsing tip**: Use `jq` for JSON Lines processing (install via `brew install jq` on macOS or `apt install jq` on Linux). Example:
+> ```sh
+> # Count requests grouped by status code
+> cat logfile.log | jq -r '.EdgeResponseStatusCode' | sort | uniq -c | sort -rn
+> # Sum download traffic by URL
+> cat logfile.log | jq -r '[.RequestUrl, .EdgeResponseBytes] | @tsv' | awk -F'\t' '{sum[$1]+=$2} END {for(u in sum) printf "%s\t%.2f MB\n", u, sum[u]/1048576}' | sort -t$'\t' -k2 -rn
+> ```
+>
+> **If `jq` is not available**, use Python as a fallback:
+> ```sh
+> python3 -c "
+> import json, sys
+> from collections import defaultdict
+> agg = defaultdict(lambda: [0, 0])
+> for line in sys.stdin:
+>     r = json.loads(line)
+>     agg[r.get('RequestUrl','')][0] += 1
+>     agg[r.get('RequestUrl','')][1] += r.get('EdgeResponseBytes', 0)
+> for url, (cnt, b) in sorted(agg.items(), key=lambda x: -x[1][1]):
+>     print(f'{url}\t{cnt}\t{b/1048576:.2f} MB')
+> " < logfile.log
+> ```
 
 **Step 3**: Parse logs and extract anomalies
 
@@ -106,6 +141,72 @@ Organize the time distribution into a table, highlight peak periods, and provide
 
 **Output recommendation**: Present the response as "time distribution table + peak period annotations + next-step recommendations".
 
+## Scenario C: Traffic / Download Volume Aggregation by Domain + URL
+
+**Trigger**: User says "which resources use the most bandwidth", "show me download traffic by URL", "I want to see per-resource traffic breakdown", "which URLs are consuming the most traffic".
+
+### Workflow
+
+**Step 1**: Confirm analysis parameters
+
+- Confirm the target domain (or all domains under the zone)
+- Parse the time range (natural language to ISO 8601)
+- Confirm the aggregation dimension: by URL only, by domain + URL, or by domain only
+
+**Step 2**: Download log files
+
+Same as Scenario A Step 2. Download and decompress the log files for the target time range.
+
+**Step 3**: Aggregate traffic data
+
+Parse each JSON line and aggregate by the requested dimension:
+
+- **Primary metric**: `EdgeResponseBytes` (total bytes delivered to client, including headers) — this represents the **download traffic** from the user's perspective
+- **Secondary metric**: `EdgeResponseBodyBytes` (response body only) — useful when isolating content size from protocol overhead
+- Group by `RequestHost` + `RequestUrl` (or `RequestHost` alone, or `RequestUrl` alone, depending on user intent)
+- Also count the number of requests per group for context
+
+Example aggregation using `jq` + `awk` (if `jq` is available):
+```sh
+# Traffic by domain + URL, sorted descending by MB value
+cat *.log | jq -r '[.RequestHost, .RequestUrl, (.EdgeResponseBytes | tostring)] | @tsv' \
+  | awk -F'\t' '{key=$1"\t"$2; sum[key]+=$3; cnt[key]++} END {for(k in sum) printf "%s\t%d\t%.2f\n", k, cnt[k], sum[k]/1048576}' \
+  | sort -t$'\t' -k4 -rn | head -50
+```
+
+If `jq` is not available, use Python:
+```sh
+python3 -c "
+import json, sys, os
+from collections import defaultdict
+agg = defaultdict(lambda: [0, 0, 0])  # [requests, bytes, body_bytes]
+for fname in sorted(f for f in os.listdir('.') if f.endswith('.log') or not '.' in f):
+    with open(fname) as fh:
+        for line in fh:
+            line = line.strip()
+            if not line: continue
+            r = json.loads(line)
+            key = (r.get('RequestHost',''), r.get('RequestUrl',''))
+            agg[key][0] += 1
+            agg[key][1] += r.get('EdgeResponseBytes', 0)
+            agg[key][2] += r.get('EdgeResponseBodyBytes', 0)
+for (host, url), (cnt, b, bb) in sorted(agg.items(), key=lambda x: -x[1][1]):
+    print(f'{host}\t{url}\t{cnt}\t{b/1048576:.2f} MB')
+"
+```
+
+**Step 4**: Enrich with cache and status insights (optional)
+
+For the Top N resources by traffic, additionally aggregate:
+- `EdgeCacheStatus` distribution (`hit` / `miss` / `dynamic`) — helps identify cacheable resources that are not being cached
+- `EdgeResponseStatusCode` distribution — detect if high-traffic resources also have high error rates
+
+**Step 5**: Output traffic report
+
+Summarize the aggregation results with the Top N table and optional insights.
+
+**Output recommendation**: Present as "overview summary + Top N traffic table + cache/status insights + optimization recommendations".
+
 ## Output Format
 
 ### Scenario A: Log Analysis Report
@@ -149,6 +250,33 @@ Organize the time distribution into a table, highlight peak periods, and provide
 ### Conclusion
 
 - Failures are concentrated in <time period>. Recommend focusing analysis on logs from that period (use Scenario A for deeper analysis).
+```
+
+### Scenario C: Traffic Aggregation Report
+
+```markdown
+## Traffic Aggregation Report — <domain / all domains>
+
+**Zone**: <zone name> (ZoneId: <zone-id>)
+**Analysis Time Period**: <start time> – <end time>
+**Total Requests**: <N> | **Total Download Traffic**: <X> MB
+
+### Top 20 Resources by Download Traffic
+
+| Domain | URL | Requests | Download Traffic | Avg Size | Cache Hit Rate |
+|---|---|---|---|---|---|
+| example.com | /video/intro.mp4 | 1,234 | 456.78 MB | 380 KB | 92% hit |
+| ... | ... | ... | ... MB | ... KB | ...% |
+
+### Insights
+
+- <cache optimization insight, e.g., "Top 3 resources account for 80% of total traffic, all have >90% cache hit rate">
+- <anomaly insight, e.g., "/api/data has 45 MB traffic but 0% cache hit — consider enabling caching for this endpoint">
+
+### Recommendations
+
+1. <recommendation 1>
+2. <recommendation 2>
 ```
 
 ## Notes

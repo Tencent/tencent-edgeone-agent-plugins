@@ -21,7 +21,8 @@ What does the user want to do?
 │
 ├─ "Analyze the logs — too many 502 errors"
 │  "Which URIs have the most abnormal requests?"
-│  └─ → eo-log-analyzer.md  🟢 Low Risk · Log download + local parsing + pattern recognition + fault inference
+│  "Show me per-URL download traffic breakdown"
+│  └─ → eo-log-analyzer.md  🟢 Low Risk · Log download + local parsing + pattern recognition + fault inference + traffic aggregation
 │
 └─ Not sure which API to call
    └─ → ../api/api-discovery.md
@@ -41,7 +42,7 @@ All operations require API calls via tccli. Before first use, complete the follo
 | [eo-traffic-daily-report.md](eo-traffic-daily-report.md) | 🟢 Low Risk | Query L7/L4 traffic trends daily and generate a Markdown report with bandwidth peak, request volume, and Top domains/regions |
 | [eo-origin-health-check.md](eo-origin-health-check.md) | 🟢 Low Risk | Query origin status code distribution and origin health ratio for quick origin fault root cause analysis |
 | [eo-log-downloader.md](eo-log-downloader.md) | 🟢 Low Risk | Describe time range and domain in natural language to automatically retrieve offline log download links |
-| [eo-log-analyzer.md](eo-log-analyzer.md) | 🟢 Low Risk | Automatically download and parse logs locally, extract anomaly details, and provide pattern recognition conclusions with fault inference recommendations |
+| [eo-log-analyzer.md](eo-log-analyzer.md) | 🟢 Low Risk | Automatically download and parse logs locally, extract anomaly details, provide pattern recognition conclusions with fault inference, or aggregate traffic by domain/URL |
 
 ## Reference Links
 
