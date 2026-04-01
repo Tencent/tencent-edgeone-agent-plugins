@@ -30,9 +30,10 @@ Match the user's request to the appropriate module, load its entry document, and
 
 | Module | Entry | Description |
 |---|---|---|
-| API Calls | [references/api/README.md](references/api/README.md) | Calling conventions, tool installation, credential configuration, API discovery, zone & domain discovery (ZoneId lookup) |
-| Site Acceleration | [references/acceleration/README.md](references/acceleration/README.md) | Site onboarding, cache purge / prefetch, certificate management |
-| Security Protection | [references/security/README.md](references/security/README.md) | Security policy template audit, blocklist IP group query, security report |
+| API | [references/api/README.md](references/api/README.md) | Calling conventions, tool installation, credential configuration, API discovery, zone & domain discovery (ZoneId lookup) |
+| Acceleration | [references/acceleration/README.md](references/acceleration/README.md) | Site onboarding, cache purge / prefetch, certificate management |
+| Security | [references/security/README.md](references/security/README.md) | Security policy template audit, blocklist IP group query, security report |
+| Observability | [references/observability/README.md](references/observability/README.md) | Traffic Daily Report Generation, Origin Health Inspection, Offline Log Download and Analysis |
 
 ## Fallback Retrieval
 
