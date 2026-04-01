@@ -1,61 +1,61 @@
-# 配置 TCCLI 凭证
+# Configure TCCLI Credentials
 
-## 登录方式
+## Login Method
 
-首先执行以下命令验证当前登录状态：
+First, run the following command to verify the current login status:
 
 ```sh
 tccli cvm DescribeRegions
 ```
 
-- 若返回正常结果，说明已登录，无需重复登录。
-- 若提示 `secretId is invalid` 或其他认证错误，说明未登录，需继续执行以下登录命令。
+- If a normal result is returned, you are already logged in — no need to log in again.
+- If it shows `secretId is invalid` or other authentication errors, you are not logged in and need to continue with the login command below.
 
-推荐使用**浏览器授权登录**，无需手填 SecretId/SecretKey，凭证会自动写入本地：
+Browser-based authorization login is recommended — no need to manually enter SecretId/SecretKey, credentials are automatically saved locally:
 
 ```sh
 tccli auth login
 ```
 
-执行后 TCCLI 会在本机起一个临时端口，并打印 OAuth 授权链接（通常也会自动用默认浏览器打开）。用户在浏览器中完成登录与授权后，TCCLI 收到回调即写入凭证并退出。
+After execution, TCCLI will start a temporary port on your machine and print an OAuth authorization link (it usually also opens automatically in the default browser). Once the user completes login and authorization in the browser, TCCLI receives the callback, writes the credentials, and exits.
 
-- 若浏览器未自动打开，请将终端中打印的链接复制到浏览器中手动打开。
-- 成功后会提示：「登录成功, 密钥凭证已被写入: ...」
-
----
-
-## Agent 操作规范
-
-**判断是否需要登录：**
-
-1. 先执行 `tccli cvm DescribeRegions`。
-2. 若返回**合理的成功结果**，视为已登录，可直接继续后续操作。
-3. 若返回错误或无法执行，则必须先执行 `tccli auth login`。
-4. 严禁向用户索要 `SecretId` / `SecretKey`，也不要执行可能暴露凭证内容的命令（尤其是 `tccli configure list`）。
-
-
-> ⚠️ Agent 不得仅凭用户口头说明或本机可能残留的凭证文件，就假设 TCCLI 已可用。
-
-**执行 `tccli auth login` 时：**
-
-- 该命令会**一直阻塞**，直到用户完成浏览器登录（或超时）。
-- Agent 应明确告知用户：「请打开终端/工具输出中显示的授权链接，在浏览器中完成登录；完成后该命令会自动结束。」
+- If the browser does not open automatically, copy the link printed in the terminal and open it manually in a browser.
+- Upon success, it will display: "Login successful, credentials have been written to: ..."
 
 ---
 
-## 多账户与登出
+## Agent Operating Guidelines
 
-| 操作 | 命令 |
+**Determining whether login is needed:**
+
+1. First run `tccli cvm DescribeRegions`.
+2. If a **reasonable success result** is returned, consider the user logged in and proceed with subsequent operations.
+3. If an error is returned or the command cannot execute, you must first run `tccli auth login`.
+4. Never ask the user for `SecretId` / `SecretKey`, and do not execute commands that might expose credential contents (especially `tccli configure list`).
+
+
+> ⚠️ The Agent must not assume TCCLI is usable based solely on the user's verbal statement or potentially stale credential files on the machine.
+
+**When running `tccli auth login`:**
+
+- This command will **block** until the user completes browser login (or it times out).
+- The Agent should clearly inform the user: "Please open the authorization link shown in the terminal/tool output and complete login in the browser; the command will end automatically once done."
+
+---
+
+## Multi-Account & Logout
+
+| Operation | Command |
 |------|------|
-| 登录默认账户 | `tccli auth login` |
-| 登录指定账户 | `tccli auth login --profile user1` |
-| 登出默认账户 | `tccli auth logout` |
-| 登出指定账户 | `tccli auth logout --profile user1` |
+| Login default account | `tccli auth login` |
+| Login specific account | `tccli auth login --profile user1` |
+| Logout default account | `tccli auth logout` |
+| Logout specific account | `tccli auth logout --profile user1` |
 
-凭证文件说明：
-- 默认账户凭证保存在 `default.credential`
-- 指定账户凭证保存在 `<profile名>.credential`（如 `user1.credential`）
+Credential file notes:
+- Default account credentials are saved in `default.credential`
+- Specific account credentials are saved in `<profile-name>.credential` (e.g., `user1.credential`)
 
-## 安全提醒
+## Security Reminder
 
-> **不建议**使用 `tccli configure` 手动填写 SecretId / SecretKey。手动配置的密钥以明文存储在本地，存在泄露风险。请始终使用 `tccli auth login` 浏览器授权方式。
+> Using `tccli configure` to manually enter SecretId / SecretKey is **not recommended**. Manually configured keys are stored in plaintext locally and risk being leaked. Always use the `tccli auth login` browser authorization method.
