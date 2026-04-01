@@ -49,9 +49,9 @@ A comprehensive Skill for the Tencent Cloud EdgeOne (Edge Security & Acceleratio
 
 | Module | Description | Typical Triggers |
 |---|---|---|
-| **acceleration** | Site onboarding, cache purge / prefetch, certificate management | "Onboard example.com to EO", "Purge cache", "Certificate is expiring" |
-| **security** | Security policy template audit, blocklist IP group query, security report | "Which domains have no security template?", "Generate a security report", "Check blocklist IP groups" |
-| **observability** | Traffic daily report, origin health check, offline log download & analysis | "Generate yesterday's traffic report", "Is the origin healthy?", "Download yesterday's logs", "Analyze logs — too many 502s" |
+| **Acceleration** | Site onboarding, cache purge / prefetch, certificate management | "Onboard example.com to EO", "Purge cache", "Certificate is expiring" |
+| **Security** | Security policy template audit, blocklist IP group query, security report | "Which domains have no security template?", "Generate a security report", "Check blocklist IP groups" |
+| **Observability** | Traffic daily report, origin health check, offline log download & analysis | "Generate yesterday's traffic report", "Is the origin healthy?", "Download yesterday's logs", "Analyze logs — too many 502s" |
 
 ## Security Design
 
