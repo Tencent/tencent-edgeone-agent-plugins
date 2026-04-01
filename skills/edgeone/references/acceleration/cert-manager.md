@@ -170,6 +170,12 @@ After user selects certificate from C1 results, call `ModifyHostsCertificate` (`
 
 1. Call `DescribeZones` to get all sites
    - **Important**: Filter out sites with `Status` as `initializing` (these sites are still initializing and haven't completed creation)
+   - **Critical**: **Must use pagination** to retrieve all sites:
+     - Set `Limit=100` (maximum value)
+     - Set `Offset=0` initially, increment by 100 each iteration
+     - Loop until `Offset + Limit >= TotalCount`
+     - Merge all paginated results
+   - Refer to [zone-discovery.md](../api/zone-discovery.md) for detailed pagination implementation
 2. Call `DescribeAccelerationDomains` for each **available** site, read certificate information from each `AccelerationDomains[].Certificate` field in the response
 3. Summarize output, marking the following anomalies:
    - Certificates with `Certificate.List[].Status` as `failed` or `applying`

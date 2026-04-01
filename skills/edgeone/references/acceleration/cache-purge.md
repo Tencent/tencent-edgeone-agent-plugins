@@ -17,6 +17,12 @@ Manage EdgeOne node cache: query quotas, purge cache (URL / Directory / Host / A
 
 1. **Call DescribeZones to query site list**
    - **Important**: Filter out sites with `Status` as `initializing` (these sites are still initializing and haven't completed creation)
+   - **Critical**: **Must use pagination** to retrieve all sites:
+     - Set `Limit=100` (maximum value)
+     - Set `Offset=0` initially, increment by 100 each iteration
+     - Loop until `Offset + Limit >= TotalCount`
+     - Merge all paginated results
+   - Refer to [zone-discovery.md](../api/zone-discovery.md) for detailed pagination implementation
    - Only display available sites
 
 2. **Determine the number of sites**:
