@@ -1,93 +1,95 @@
 # security-template-audit
 
-盘查 EdgeOne 安全策略模板覆盖范围，输出模板与绑定资源的映射关系，找出未绑定模板的域名，适合安全审计场景。
+Audit EdgeOne security policy template coverage, output template-to-bound-resource mappings, and find domains without any bound templates — suitable for security audit scenarios.
 
-## 涉及 API
+## APIs Involved
 
-| Action | 说明 |
+| Action | Description |
 |---|---|
-| DescribeWebSecurityTemplates | 查询站点下所有安全策略模板列表 |
-| DescribeWebSecurityTemplate | 查询单个模板的详细配置 |
-| DescribeSecurityTemplateBindings | 查询模板与域名的绑定关系 |
+| `DescribeWebSecurityTemplates` | Query all security policy templates under the zone |
+| `DescribeWebSecurityTemplate` | Query detailed configuration of a single template |
+| `DescribeSecurityTemplateBindings` | Query the binding relationship between templates and domains |
 
-> **命令用法**：本文档只列出 API 名称和流程指引。
-> 执行前请通过 [api-discovery.md](../api/api-discovery.md) 中的方式查阅接口文档，确认完整参数和响应说明。
+> **Command usage**: This document only lists API names and process guidelines.
+> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm the complete parameters and response descriptions.
 
-## 前置条件
+## Prerequisites
 
-1. 所有腾讯云 API 调用统一通过 `tccli` 执行，执行前请确认已完成登录鉴权。
+1. All Tencent Cloud API calls are executed via `tccli` — confirm login authentication is complete before execution.
 
-2. 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
+2. You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
 
-## 执行流程
+## Execution Flow
 
-**触发**：用户说"哪些域名没有绑安全模板"、"帮我检查模板覆盖情况"、"看看有没有域名漏绑了安全策略"、"帮我做安全模板审计"、"哪些域名没有安全防护"、"模板绑定情况怎么样"、"帮我盘查一下安全模板"、"有没有域名没绑模板"。
+**Trigger**: User says "which domains don't have a security template", "help me check template coverage", "are there any domains that missed binding a security policy", "help me audit security templates", "which domains have no security protection", "what's the template binding status", "help me check security templates", "are there domains without bound templates".
 
-按以下顺序调用接口，逐步构建模板-绑定资源映射表：
+Call the following APIs in order to progressively build the template-binding resource mapping:
 
-### 第一步：获取所有安全策略模板列表
+### Step 1: Get All Security Policy Templates
 
-调用 `DescribeWebSecurityTemplates` 接口，记录每个模板的 `TemplateId` 和 `TemplateName`，作为后续查询的输入。
+Call the `DescribeWebSecurityTemplates` API, record each template's `TemplateId` and `TemplateName` as input for subsequent queries.
 
-### 第二步：逐一获取每个模板的详细配置
+### Step 2: Get Detailed Configuration for Each Template
 
-调用 `DescribeWebSecurityTemplate` 接口，关注以下字段，用于后续状态标注：
-- 模板是否启用（整体开关状态）
-- 各防护模块（WAF、CC、Bot 等）是否有规则配置
+Call the `DescribeWebSecurityTemplate` API, focusing on the following fields for subsequent status labeling:
+- Whether the template is enabled (overall toggle status)
+- Whether each protection module (WAF, CC, Bot, etc.) has rule configurations
 
-### 第三步：查询每个模板的域名绑定关系
+### Step 3: Query Domain Binding Relationships for Each Template
 
-调用 `DescribeSecurityTemplateBindings` 接口，收集每个模板绑定的域名列表，汇总为全局的"已覆盖域名集合"。
+Call the `DescribeSecurityTemplateBindings` API, collect the list of domains bound to each template, and aggregate into a global "covered domains set".
 
-### 第四步：获取站点完整域名列表
+### Step 4: Get the Complete Domain List for the Zone
 
-为了识别未覆盖域名，需要获取站点下的完整域名列表，调用 `DescribeZoneRelatedDomains` 接口。
+To identify uncovered domains, you need the complete domain list under the zone — call the `DescribeZoneRelatedDomains` API.
 
-> 如果该接口不可用或返回为空，可尝试通过 [api-discovery.md](../api/api-discovery.md) 查找其他获取域名列表的接口（如 `DescribeAccelerationDomains`）。
+> If this API is unavailable or returns empty, try finding other APIs to get the domain list (such as `DescribeAccelerationDomains`) via [api-discovery.md](../api/api-discovery.md).
 
-### 第五步：交叉比对，识别未覆盖域名
+### Step 5: Cross-Compare to Identify Uncovered Domains
 
-将"已覆盖域名集合"（第三步汇总结果）与站点完整域名列表做差集，得出未绑定任何模板的域名清单。
+Compute the difference between the "covered domains set" (aggregated from Step 3) and the complete zone domain list to produce the list of domains not bound to any template.
 
-> ⚠️ **注意**：如果无法获取站点完整域名列表，应明确说明"当前仅能基于模板绑定关系输出已知覆盖情况，无法确认是否存在遗漏域名"，不要凭空推断。
+> ⚠️ **Note**: If the complete domain list cannot be obtained, explicitly state "currently can only output known coverage based on template binding relationships — cannot confirm whether there are missing domains" — do not make assumptions.
 
-## 输出格式
+## Output Format
+
+> **Language note**: Adapt the report language to match the user's language. The template below is an example — output should be in the same language the user is using.
 
 ```markdown
-## 安全模板覆盖盘查报告
+## Security Template Coverage Audit Report
 
-**站点**：example.com（ZoneId: zone-xxx）
-**盘查时间**：YYYY-MM-DD
-**数据来源**：DescribeWebSecurityTemplates / DescribeWebSecurityTemplate / DescribeSecurityTemplateBindings
+**Zone**: example.com (ZoneId: zone-xxx)
+**Audit Date**: YYYY-MM-DD
+**Data Sources**: `DescribeWebSecurityTemplates` / `DescribeWebSecurityTemplate` / `DescribeSecurityTemplateBindings`
 
-### 模板-绑定资源映射表
+### Template-Binding Resource Mapping
 
-| 模板名称 | 模板 ID | 绑定域名数 | 绑定域名列表 | 模板状态 |
+| Template Name | Template ID | Bound Domains Count | Bound Domain List | Template Status |
 |---|---|---|---|---|
-| 生产环境模板 | template-xxx | 3 | a.com, b.com, c.com | ✅ 正常 |
-| 测试环境模板 | template-yyy | 0 | —（未绑定任何域名） | ⚠️ 空模板 |
+| Production Template | template-xxx | 3 | a.com, b.com, c.com | ✅ Normal |
+| Test Template | template-yyy | 0 | — (no domains bound) | ⚠️ Empty template |
 
-### 覆盖摘要
+### Coverage Summary
 
-- 当前模板总数：N 个
-- 已绑定域名的模板：N 个 / 空模板（未绑定任何域名）：N 个
-- 已覆盖域名总数：N 个
-- **未覆盖域名总数：N 个**
+- Total templates: N
+- Templates with bound domains: N / Empty templates (no domains bound): N
+- Total covered domains: N
+- **Uncovered domains: N**
 
-### 未覆盖域名清单
+### Uncovered Domain List
 
-> 以下域名未绑定任何安全策略模板，存在防护空白：
+> The following domains are not bound to any security policy template and have a protection gap:
 
 - example.com
 - test.example.com
 - staging.example.com
 
-（如无法获取完整域名列表，此处注明"数据不完整，仅展示已知覆盖情况"）
+(If the complete domain list is unavailable, note here: "Data is incomplete, showing known coverage only")
 
-### 处理建议
+### Recommended Actions
 
-- 未覆盖域名：建议评估后绑定合适的安全模板
-- 空模板：建议确认是否为预留模板，如无用途可考虑清理
+- Uncovered domains: Evaluate and bind an appropriate security template
+- Empty templates: Confirm whether they are reserved templates; consider cleanup if unused
 ```
 
-> **只读声明**：本技能仅执行查询操作，不进行任何绑定或修改。如需补绑模板，请在控制台操作或调用相应写接口，操作前请确认影响范围。
+> **Read-only disclaimer**: This skill only performs query operations and does not perform any binding or modification. To bind templates, use the console or call the appropriate write APIs — confirm the impact scope before operating.

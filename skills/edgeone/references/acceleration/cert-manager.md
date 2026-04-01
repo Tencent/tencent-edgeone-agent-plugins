@@ -1,85 +1,87 @@
-# 证书自动化管理
+# Certificate Automation Management
 
-管理 EdgeOne 域名的 HTTPS 证书：查询证书状态、申请免费证书、部署自有证书。
+Manage HTTPS certificates for EdgeOne domains: query certificate status, apply for free certificates, deploy custom certificates.
 
-## 场景 A：查询证书状态
+## Scenario A: Query Certificate Status
 
-**触发**：用户想查看证书列表、检查过期时间。
+**Trigger**: User wants to view the certificate list or check expiration dates.
 
-调用 `DescribeDefaultCertificates`。
+Call `DescribeDefaultCertificates`.
 
-> 需要先获取 ZoneId，参考 [../api/zone-discovery.md](../api/zone-discovery.md)。
+> You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
 
-**输出建议**：以表格形式展示证书列表，标注即将过期（≤30 天）的证书。
+**Output suggestion**: Display the certificate list in a table, marking certificates expiring soon (≤ 30 days).
 
-## 场景 B：申请并部署免费证书
+## Scenario B: Apply for and Deploy a Free Certificate
 
-**触发**：用户说"申请免费证书"、"证书快过期了"、"续签证书"。
+**Trigger**: User says "apply for a free certificate", "certificate is expiring", "renew certificate".
 
-### 接入模式判断
+### Access Mode Determination
 
-| 接入模式 | 免费证书申请方式 |
+| Access Mode | Free Certificate Application Method |
 |---|---|
-| NS 接入 / DNSPod 托管 | **自动验证**——直接调用 ModifyHostsCertificate |
-| CNAME 接入 | **手动验证**——需先 ApplyFreeCertificate，完成验证后再部署 |
+| NS access / DNSPod hosting | **Auto verification** — directly call `ModifyHostsCertificate` |
+| CNAME access | **Manual verification** — first call `ApplyFreeCertificate`, complete verification, then deploy |
 
-> 调用 DescribeZones 查询接入模式，根据响应判断走哪条路线。
+> Call `DescribeZones` to query the access mode, and determine which route to follow based on the response.
 
-### B1：NS 接入 / DNSPod 托管（自动验证）
+### B1: NS Access / DNSPod Hosting (Auto Verification)
 
-调用 `ModifyHostsCertificate`。
+Call `ModifyHostsCertificate`.
 
-> **确认提示**：部署证书会影响域名的 HTTPS 服务，执行前需向用户确认。
+> **Confirmation prompt**: Deploying a certificate will affect the domain's HTTPS service — confirm with the user before execution.
 
-### B2：CNAME 接入（手动验证）
+### B2: CNAME Access (Manual Verification)
 
-需要 4 步：
+Requires 4 steps:
 
-**步骤 1**：调用 `ApplyFreeCertificate` 发起申请。
+**Step 1**: Call `ApplyFreeCertificate` to initiate the application.
 
-**步骤 2**：根据响应中的验证信息，告知用户完成配置。
+**Step 2**: Based on the verification info in the response, inform the user to complete the configuration.
 
-> 告知用户后**等待用户确认已完成配置**，再继续下一步。
+> After informing the user, **wait for user confirmation that the configuration is complete** before continuing to the next step.
 
-**步骤 3**：调用 `CheckFreeCertificateVerification` 检查验证结果
+**Step 3**: Call `CheckFreeCertificateVerification` to check the verification result
 
-- 成功：响应中包含证书信息，说明证书已签发
-- 失败：需检查验证配置是否正确
+- Success: The response contains certificate info, indicating the certificate has been issued
+- Failure: The verification configuration needs to be checked
 
-**步骤 4**：调用 `ModifyHostsCertificate` 部署免费证书。
+**Step 4**: Call `ModifyHostsCertificate` to deploy the free certificate.
 
-> **确认提示**：部署证书会影响域名的 HTTPS 服务，执行前需向用户确认。
+> **Confirmation prompt**: Deploying a certificate will affect the domain's HTTPS service — confirm with the user before execution.
 
-## 场景 C：部署自有证书
+## Scenario C: Deploy a Custom Certificate
 
-**触发**：用户说"配置自有证书"、"上传的证书"、提供了 CertId。
+**Trigger**: User says "configure custom certificate", "uploaded certificate", or provides a CertId.
 
-用户需先将证书上传至 [SSL 证书控制台](https://console.cloud.tencent.com/ssl)，获取 CertId。
+The user must first upload the certificate to the [SSL Certificate Console](https://console.cloud.tencent.com/ssl) and obtain the CertId.
 
-调用 `ModifyHostsCertificate`。
+Call `ModifyHostsCertificate`.
 
-> **禁止自动部署**：**必须**向用户确认部署域名和证书 ID 后才能执行。
+> **No automatic deployment**: You **must** confirm the deployment domain and certificate ID with the user before execution.
 
-## 场景 D：批量证书巡检
+## Scenario D: Batch Certificate Inspection
 
-**触发**：用户说"检查所有域名的证书"、"哪些证书快过期了"。
+**Trigger**: User says "check certificates for all domains", "which certificates are expiring soon".
 
-### 流程
+### Process
 
-1. 用 DescribeZones 获取所有站点
-2. 对每个站点调用 DescribeDefaultCertificates
-3. 汇总输出，标注以下异常：
-   - 部署失败的证书
-   - 距到期 ≤30 天的证书
-   - 未部署证书的域名
+1. Use `DescribeZones` to get all zones
+2. Call `DescribeDefaultCertificates` for each zone
+3. Summarize output, marking the following anomalies:
+   - Certificates with deployment failures
+   - Certificates expiring within ≤ 30 days
+   - Domains without deployed certificates
 
-### 输出格式建议
+### Suggested Output Format
+
+> **Language note**: Adapt the report language to match the user's language. The template below is an example — output should be in the same language the user is using.
 
 ```markdown
-## 证书巡检报告
+## Certificate Inspection Report
 
-| 站点 | 域名 | 证书 ID | 到期时间 | 剩余天数 | 状态 |
+| Zone | Domain | Certificate ID | Expiry Date | Days Remaining | Status |
 |---|---|---|---|---|---|
-| example.com | *.example.com | teo-xxx | 2026-04-15 | 29 天 | 即将过期 |
-| example.com | api.example.com | teo-yyy | 2026-09-01 | 168 天 | 正常 |
+| example.com | *.example.com | teo-xxx | 2026-04-15 | 29 days | Expiring Soon |
+| example.com | api.example.com | teo-yyy | 2026-09-01 | 168 days | Normal |
 ```
