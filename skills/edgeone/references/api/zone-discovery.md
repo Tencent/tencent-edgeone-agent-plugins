@@ -1,36 +1,36 @@
-# 站点与域名发现
+# Zone & Domain Discovery
 
-EdgeOne 几乎所有 API 操作都需要 **ZoneId**（站点 ID，形如 `zone-2noz78a8ev6k`）。
-以下是发现 ZoneId 及反查域名的标准流程。
+Nearly all EdgeOne API operations require a **ZoneId** (zone ID, in the format `zone-xxx123abc456`).
+Below is the standard process for discovering ZoneIds and reverse-looking up domains.
 
-## 涉及 API
+## APIs Involved
 
-| Action | 说明 | 接口文档 |
+| Action | Description | API Docs |
 |---|---|---|
-| DescribeZones | 查询站点列表 | `curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/action/DescribeZones.md` |
-| DescribeAccelerationDomains | 查询加速域名列表 | `curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/action/DescribeAccelerationDomains.md` |
+| DescribeZones | Query the list of zones | `curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/action/DescribeZones.md` |
+| DescribeAccelerationDomains | Query the list of acceleration domains | `curl -s https://cloudcache.tencentcs.com/capi/refs/service/teo/action/DescribeAccelerationDomains.md` |
 
-调用前先查阅上方接口文档，获取 Filters、分页等参数的准确用法。
+Check the API docs above before calling, to get the exact usage of Filters, pagination, and other parameters.
 
-## 1. 列出所有站点
+## 1. List All Zones
 
-调用 **DescribeZones**，响应中 `Zones` 数组包含每个站点的 `ZoneId`、`ZoneName`（站点域名）、`Status` 等信息。
+Call `DescribeZones` — the `Zones` array in the response contains each zone's `ZoneId`, `ZoneName` (zone domain), `Status`, and other info.
 
-## 2. 按站点名精确查询
+## 2. Query by Zone Name
 
-当用户已知站点域名时，调用 **DescribeZones** 并通过 `Filters`（`zone-name`）精确匹配。
+When the user already knows the zone domain, call `DescribeZones` with `Filters` (`zone-name`) for an exact match.
 
-## 3. 从子域名反查 ZoneId
+## 3. Reverse-Lookup ZoneId from a Subdomain
 
-当用户只提供了子域名（如 `www.example.com`）而不知道 ZoneId 时：
+When the user only provides a subdomain (e.g., `www.example.com`) and doesn't know the ZoneId:
 
-1. 先调用 **DescribeZones** 列出所有站点，找到与子域名匹配的根域名对应的 ZoneId
-2. 再调用 **DescribeAccelerationDomains** 并通过 `Filters`（`domain-name`）确认该域名存在于站点下
+1. First call `DescribeZones` to list all zones, and find the ZoneId corresponding to the root domain matching the subdomain
+2. Then call `DescribeAccelerationDomains` with `Filters` (`domain-name`) to confirm the domain exists under the zone
 
-## 4. 列出站点下所有域名
+## 4. List All Domains Under a Zone
 
-调用 **DescribeAccelerationDomains** 并传入 `ZoneId`。注意使用分页参数处理多页结果。
+Call `DescribeAccelerationDomains` with the `ZoneId`. Be sure to use pagination parameters to handle multi-page results.
 
-## 5. ZoneId 缓存建议
+## 5. ZoneId Caching Recommendation
 
-同一个会话中，已发现的 ZoneId 应记住复用，避免重复调用 DescribeZones。
+Within the same session, previously discovered ZoneIds should be remembered and reused to avoid repeated calls to `DescribeZones`.

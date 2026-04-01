@@ -1,166 +1,166 @@
-# 站点一键接入向导
+# Site Onboarding Wizard
 
-端到端完成域名接入 EdgeOne：确认套餐 → 创建站点 → 验证归属权 → 添加加速域名 → 申请并部署证书。
+End-to-end domain onboarding to EdgeOne: confirm plan → create zone → verify ownership → add acceleration domain → apply for and deploy certificate.
 
-## 端到端流程总览
+## End-to-End Process Overview
 
 ```
-1. 确认套餐（DescribePlans / DescribeAvailablePlans / CreatePlan）
+1. Confirm plan (`DescribePlans` / `DescribeAvailablePlans` / `CreatePlan`)
        ↓
-2. 创建站点（CreateZone）
-   ├─ NS 接入：切换 DNS 服务器
-   └─ CNAME 接入：添加 TXT 记录或文件验证
+2. Create zone (`CreateZone`)
+   ├─ NS access: switch DNS servers
+   └─ CNAME access: add TXT record or file verification
        ↓
-3. 验证归属权（VerifyOwnership）—— 可跳过，后续再验证
+3. Verify ownership (`VerifyOwnership`) — can be skipped, verify later
        ↓
-4. 添加加速域名（CreateAccelerationDomain）
+4. Add acceleration domain (`CreateAccelerationDomain`)
        ↓
-5. 申请并部署 HTTPS 证书（详见 cert-manager.md）
+5. Apply for and deploy HTTPS certificate (see cert-manager.md)
        ↓
-   完成接入
+   Onboarding complete
 ```
 
-> 可随时通过 DescribeIdentifications 查询验证状态。
-> 证书相关查询与操作参考 [cert-manager.md](cert-manager.md)。
+> You can check verification status at any time via `DescribeIdentifications`.
+> For certificate queries and operations, see [cert-manager.md](cert-manager.md).
 
-## 场景 A：确认套餐
+## Scenario A: Confirm Plan
 
-**触发**：流程开始的第一步，在创建站点前必须先确认套餐。
+**Trigger**: The first step in the process — a plan must be confirmed before creating a zone.
 
-### A1：查询已有套餐（DescribePlans）
+### A1: Query Existing Plans (`DescribePlans`)
 
-调用 `DescribePlans` 查询账号下的套餐列表。
+Call `DescribePlans` to query the list of plans under the account.
 
-#### 筛选逻辑
+#### Filtering Logic
 
-从返回的套餐列表中，按以下条件过滤出可用套餐：
+From the returned plan list, filter for available plans using the following conditions:
 
-1. **可绑定**：`Bindable == "true"`
-2. **状态正常**：`Status == "normal"`
-3. **配额充足**：已绑定站点数 < 站点配额上限
+1. **Bindable**: `Bindable == "true"`
+2. **Normal status**: `Status == "normal"`
+3. **Sufficient quota**: Number of bound zones < zone quota limit
 
-> 只有同时满足以上 3 个条件的套餐才能用于绑定。
+> Only plans meeting all 3 conditions above can be used for binding.
 
-#### 有可用套餐
+#### Available Plans Found
 
-> **禁止自动绑定**：绑定套餐会消耗站点配额，**必须**先向用户展示套餐信息并等待用户明确选择后才能执行绑定，绝不可自行决定。
+> **No automatic binding**: Binding a plan consumes a zone quota slot. You **must** show the plan info to the user first and wait for the user to explicitly choose before binding — never decide on your own.
 
-向用户展示可用套餐列表，询问要绑定哪个：
+Show the available plans to the user and ask which one to bind:
 
-- 若 **仅 1 个套餐**：仍需向用户确认后才能使用
-- 若 **多个套餐**：展示套餐类型、服务区域、站点配额使用情况，等待用户选择
-- 用户也可以选择 **不绑定已有套餐**，转到 A2 购买新套餐
+- If there is **only 1 plan**: still require user confirmation before using it
+- If there are **multiple plans**: show plan type, service region, and zone quota usage, then wait for the user to choose
+- The user may also choose to **not bind an existing plan** and go to A2 to purchase a new one
 
-#### 无可用套餐
+#### No Available Plans
 
-转到 A2。
+Go to A2.
 
-### A2：购买新套餐（DescribeAvailablePlans → CreatePlan）
+### A2: Purchase a New Plan (`DescribeAvailablePlans` → `CreatePlan`)
 
-调用 `DescribeAvailablePlans` 查询当前账户可购买的套餐类型，向用户展示可选方案。
+Call `DescribeAvailablePlans` to query purchasable plan types for the current account, and show the available options to the user.
 
-> **禁止自动购买**：购买套餐将产生实际费用，**必须**向用户展示套餐类型、价格信息，并等待用户明确确认后才能调用 `CreatePlan`。绝不可跳过确认或自行决定购买。
+> **No automatic purchase**: Purchasing a plan incurs actual charges. You **must** show the plan type and pricing info to the user and wait for explicit confirmation before calling `CreatePlan`. Never skip confirmation or decide to purchase on your own.
 
-用户明确确认后，调用 `CreatePlan` 购买套餐。
+After the user explicitly confirms, call `CreatePlan` to purchase the plan.
 
-若用户确认不购买，提醒：**站点需绑定套餐后才能正常提供服务**，未绑定套餐的站点将处于 `init` 状态无法生效。
+If the user decides not to purchase, remind them: **A zone requires a bound plan to provide service** — zones without a bound plan will remain in `init` status and will not take effect.
 
-### 下一步
+### Next Step
 
-套餐确认完成后，携带 PlanId 进入 [场景 B：创建站点](#场景-b创建站点)。
+After plan confirmation, proceed to [Scenario B: Create Zone](#scenario-b-create-zone) with the PlanId.
 
-## 场景 B：创建站点
+## Scenario B: Create Zone
 
-**触发**：用户说"把 example.com 接入 EdgeOne"、"创建站点"、"新建站点"，或套餐确认完成后的后续步骤。
+**Trigger**: User says "onboard example.com to EdgeOne", "create a zone", "create a new zone", or as the follow-up step after plan confirmation.
 
-> 若用户直接触发本场景（未经过场景 A），须先引导完成 [场景 A：确认套餐](#场景-a确认套餐) 再继续。
+> If the user triggers this scenario directly (without going through Scenario A), guide them to complete [Scenario A: Confirm Plan](#scenario-a-confirm-plan) first before continuing.
 
-> **禁止自动创建**：创建站点会消耗套餐的站点配额，**必须**向用户确认站点域名、接入模式和服务区域后才能执行，绝不可自行决定。
+> **No automatic creation**: Creating a zone consumes a plan's zone quota. You **must** confirm the zone domain, access mode, and service region with the user before execution — never decide on your own.
 
-**调用** `CreateZone`。用户需提供：站点域名、接入模式、服务区域。建议创建时直接传入 PlanId。
+**Call** `CreateZone`. The user needs to provide: zone domain, access mode, service region. It is recommended to pass the PlanId directly when creating.
 
-> 不传 PlanId 时站点处于 `init` 状态，需后续通过 BindZoneToPlan 绑定。
+> Without a PlanId, the zone will be in `init` status and will need to be bound later via `BindZoneToPlan`.
 >
-> **禁止自动绑定**：无论是通过 `CreateZone` 传入 PlanId 还是后续调用 `BindZoneToPlan`，都**必须**事先获得用户明确确认，绝不可自行决定绑定哪个套餐。
+> **No automatic binding**: Whether passing PlanId via `CreateZone` or later calling `BindZoneToPlan`, you **must** obtain explicit user confirmation beforehand — never decide which plan to bind on your own.
 
-### NS 接入的下一步
+### Next Steps for NS Access
 
-告知用户需要到域名注册商处将 DNS 服务器修改为响应中返回的 NameServers，然后转至 [场景 C：验证归属权](#场景-c验证归属权)。
+Inform the user that they need to change the DNS servers at their domain registrar to the NameServers returned in the response, then go to [Scenario C: Verify Ownership](#scenario-c-verify-ownership).
 
-### CNAME 接入的下一步
+### Next Steps for CNAME Access
 
-告知用户两种验证方式（任选其一），从响应中获取验证信息：
+Inform the user of two verification methods (choose either one), with verification info from the response:
 
-1. **DNS 验证**：在 DNS 添加 TXT 记录
-2. **文件验证**：在源站根目录放置验证文件
+1. **DNS verification**: Add a TXT record in DNS
+2. **File verification**: Place a verification file in the origin server's root directory
 
-等待用户确认配置完成后，转至 [场景 C：验证归属权](#场景-c验证归属权)。
+Wait for the user to confirm the configuration is complete, then go to [Scenario C: Verify Ownership](#scenario-c-verify-ownership).
 
-## 场景 C：验证归属权
+## Scenario C: Verify Ownership
 
-**触发**：用户说"验证站点"、"检查 DNS 切换"、"归属权验证"，或创建站点后的后续步骤。
+**Trigger**: User says "verify the zone", "check DNS switch", "ownership verification", or as the follow-up step after zone creation.
 
-> 用户可以选择跳过归属权验证，直接进入 [场景 D：添加加速域名](#场景-d添加加速域名)，后续再回来验证。
+> The user can choose to skip ownership verification and go directly to [Scenario D: Add Acceleration Domain](#scenario-d-add-acceleration-domain), returning to verify later.
 
-### C1：查询验证状态（DescribeIdentifications）
+### C1: Query Verification Status (`DescribeIdentifications`)
 
-在触发验证前，先调用 `DescribeIdentifications` 查询当前验证状态。
+Before triggering verification, first call `DescribeIdentifications` to query the current verification status.
 
-**决策**：
-- 若 `Status` 为 `finished`，无需再验证，直接进入下一步
-- 若 `Status` 为 `pending`，根据响应中的验证信息告知用户配置 DNS TXT 记录或文件验证
+**Decision**:
+- If `Status` is `finished`, no need to verify again — proceed to the next step
+- If `Status` is `pending`, inform the user to configure a DNS TXT record or file verification based on the verification info in the response
 
-### C2：触发验证（VerifyOwnership）
+### C2: Trigger Verification (`VerifyOwnership`)
 
-等用户确认已完成 DNS / 文件配置后，调用 `VerifyOwnership`。
+After the user confirms they have completed the DNS / file configuration, call `VerifyOwnership`.
 
-**NS 接入场景**：验证 DNS 服务器是否已切换成功。DNS 切换通常需要 24-48 小时全球生效，如果验证失败，建议用户稍后重试。
+**NS access scenario**: Verifies whether the DNS servers have been successfully switched. DNS switching typically takes 24–48 hours to propagate globally — if verification fails, suggest the user retry later.
 
-**CNAME 接入场景**：验证 TXT 记录或文件是否正确配置。若站点通过归属权验证，后续添加域名无需再验证。
+**CNAME access scenario**: Verifies whether the TXT record or file is correctly configured. Once the zone passes ownership verification, subsequent domain additions won't require re-verification.
 
-## 场景 D：添加加速域名
+## Scenario D: Add Acceleration Domain
 
-**触发**：用户说"添加域名"、"配置加速域名"、"接入子域名"，或验证归属权完成（或跳过）后的后续步骤。
+**Trigger**: User says "add a domain", "configure acceleration domain", "onboard a subdomain", or as the follow-up step after ownership verification (or skip).
 
-### D1：采集参数
+### D1: Collect Parameters
 
-调用前需向用户确认以下信息：
+Before calling, confirm the following information with the user:
 
-1. **加速域名**（DomainName）：要接入的子域名，如 `www.example.com`
-2. **IPv6 访问**（IPv6Status）：是否开启 IPv6 访问
-3. **源站配置**（OriginInfo），包括：
-   - **源站类型**（OriginType）
-   - **源站地址**（Origin）：根据源站类型填写 IP、域名、COS 桶域名、源站组 ID 等
-   - 如需私有对象存储源站访问，确认 PrivateAccess 及鉴权参数
-4. **回源协议**（OriginProtocol，可选）：FOLLOW / HTTP / HTTPS
-5. **回源端口**（可选）：HTTP 回源端口 / HTTPS 回源端口
+1. **Acceleration domain** (DomainName): the subdomain to onboard, e.g., `www.example.com`
+2. **IPv6 access** (IPv6Status): whether to enable IPv6 access
+3. **Origin configuration** (OriginInfo), including:
+   - **Origin type** (OriginType)
+   - **Origin address** (Origin): fill in IP, domain, COS bucket domain, origin group ID, etc., depending on origin type
+   - If private object storage origin access is needed, confirm PrivateAccess and authentication parameters
+4. **Origin protocol** (OriginProtocol, optional): FOLLOW / HTTP / HTTPS
+5. **Origin port** (optional): HTTP origin port / HTTPS origin port
 
-### D2：调用 CreateAccelerationDomain
+### D2: Call `CreateAccelerationDomain`
 
-> **禁止自动添加**：添加加速域名会变更线上 DNS 配置，**必须**在 D1 完成参数采集并获得用户明确确认后才能执行，绝不可自行决定。
+> **No automatic addition**: Adding an acceleration domain changes live DNS configuration. You **must** complete parameter collection in D1 and obtain explicit user confirmation before execution — never decide on your own.
 
-用户确认后调用 `CreateAccelerationDomain`。
+After user confirmation, call `CreateAccelerationDomain`.
 
-**下一步**：告知用户需要在 DNS 添加 CNAME 记录，将域名指向 EdgeOne 分配的 CNAME 地址（可通过 `DescribeAccelerationDomains` 查询 `Cname` 字段获取）。
+**Next step**: Inform the user that they need to add a CNAME record in DNS, pointing the domain to the CNAME address assigned by EdgeOne (obtainable by querying the `Cname` field via `DescribeAccelerationDomains`).
 
-## 场景 E：申请并部署 HTTPS 证书
+## Scenario E: Apply for and Deploy HTTPS Certificate
 
-**触发**：域名添加完成后，用户说"配置 HTTPS"、"申请证书"，或作为接入流程的最后一步。
+**Trigger**: After domain addition, user says "configure HTTPS", "apply for certificate", or as the final step in the onboarding process.
 
-> 证书的完整管理（CNAME 手动验证、部署自有证书、批量巡检等）参考 [cert-manager.md](cert-manager.md)。
+> For complete certificate management (CNAME manual verification, deploy custom certificates, batch inspection, etc.), see [cert-manager.md](cert-manager.md).
 
-### E1：NS 接入 / DNSPod 托管（自动验证，一步完成）
+### E1: NS Access / DNSPod Hosting (Auto Verification, One Step)
 
-> **禁止自动部署**：部署证书会直接影响域名的 HTTPS 服务，**必须**向用户说明将为哪些域名部署何种证书，并等待用户明确确认后才能调用 `ModifyHostsCertificate`。
+> **No automatic deployment**: Deploying a certificate directly affects the domain's HTTPS service. You **must** explain which domains will receive which certificate, and wait for explicit user confirmation before calling `ModifyHostsCertificate`.
 
-### E2：CNAME 接入（手动验证）
+### E2: CNAME Access (Manual Verification)
 
-CNAME 接入需要先申请证书、完成域名验证、再部署，流程较长。请参考 [cert-manager.md 场景 B2](cert-manager.md#b2cname-接入手动验证) 的完整步骤。
+CNAME access requires applying for the certificate first, completing domain verification, and then deploying — the process is longer. See the complete steps in [cert-manager.md Scenario B2](cert-manager.md#b2-cname-access-manual-verification).
 
-## 场景 F：查看接入状态
+## Scenario F: Check Onboarding Status
 
-**触发**：用户说"查看站点状态"、"域名接入好了没"。
+**Trigger**: User says "check zone status", "is the domain onboarded yet".
 
-调用 `DescribeZones` 查询目标站点状态。
+Call `DescribeZones` to query the target zone's status.
 
-> 参考 [../api/zone-discovery.md](../api/zone-discovery.md) 获取更多查询方式。
+> See [../api/zone-discovery.md](../api/zone-discovery.md) for more query methods.

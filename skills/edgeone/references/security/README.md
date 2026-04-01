@@ -1,50 +1,50 @@
-# EdgeOne 安全防护参考
+# EdgeOne Security Protection Reference
 
-安全策略配置快照、模板覆盖盘查、域名 IP 组黑名单识别的配置与运维指引。
+Configuration and operations guide for security policy configuration snapshots, template coverage audits, and domain IP group blocklist identification.
 
-## 快速决策树
+## Quick Decision Tree
 
 ```
-用户想做什么？
+What does the user want to do?
 │
-├─ 「帮我出一份本周的安全防护状态报告」
-│  「查一下现在的安全配置」
-│  └─ → security-weekly-report.md  🟢 低风险 · 顺序采集后优先输出结论，附精简快照
+├─ "Generate a security status report for this week"
+│  "Check the current security configuration"
+│  └─ → security-weekly-report.md  🟢 Low risk · Sequential data collection, output conclusions first with concise snapshot
 │
-├─ 「哪些域名没有绑安全模板」
-│  「帮我检查模板覆盖情况」
-│  └─ → security-template-audit.md  🟢 低风险 · 列出未绑定域名，提示人工确认
+├─ "Which domains don't have a security template"
+│  "Help me check template coverage"
+│  └─ → security-template-audit.md  🟢 Low risk · List unbound domains, prompt for manual confirmation
 │
-├─ 「查一下 example.com 的安全策略里哪个 IP 组是黑名单」
-│  「这个域名的拦截 IP 组是哪个」
-│  └─ → domain-blacklist-inspector.md  🟢 低风险 · 只读查询，识别黑名单 IP 组
+├─ "Check which IP group in example.com's security policy is a blocklist"
+│  "Which IP group blocks traffic for this domain"
+│  └─ → domain-blacklist-inspector.md  🟢 Low risk · Read-only query, identify blocklist IP groups
 │
-├─ 「帮我分析最近的攻击 IP 集中度」
-│  「把这些 IP 拉黑」「IP 封禁」
-│  └─ → ip-threat-blacklist.md  🔴 高风险 · 写操作前强制展示 Diff + 二次确认，只允许写入指定黑名单组
+├─ "Help me analyze recent attack IP concentration"
+│  "Block these IPs" "IP ban"
+│  └─ → ip-threat-blacklist.md  🔴 High risk · Mandatory Diff display + double confirmation before write operations, only allowed to write to designated blocklist group
 │
-└─ 不确定该调哪个 API
+└─ Not sure which API to call
    └─ → ../api/api-discovery.md
 ```
 
-## 前置条件
+## Prerequisites
 
-所有操作均需要通过 tccli 调用 API。首次使用前，请先完成：
+All operations require calling APIs via tccli. Before first use, complete the following:
 
-1. **工具检查** — 阅读 [../api/README.md](../api/README.md) 完成 tccli 安装与凭证配置
-2. **获取 ZoneId** — 阅读 [../api/zone-discovery.md](../api/zone-discovery.md) 获取站点 ID
+1. **Tool check** — Read [../api/README.md](../api/README.md) to complete tccli installation and credential configuration
+2. **Get ZoneId** — Read [../api/zone-discovery.md](../api/zone-discovery.md) to obtain the zone ID
 
-## 本目录文件
+## Files in This Directory
 
-| 文件 | 风险等级 | 核心触发场景 |
+| File | Risk Level | Core Trigger Scenario |
 |---|---|---|
-| [security-weekly-report.md](security-weekly-report) | 🟢 低风险 | 定期生成安全防护配置快照，感知策略是否出现异常变更 |
-| [security-template-audit.md](security-template-audit) | 🟢 低风险 | 盘查安全策略模板覆盖范围，找出未绑定模板的域名 |
-| [domain-blacklist-inspector.md](domain-blacklist-inspector) | 🟢 低风险 | 查询指定域名关联的安全策略，识别承担黑名单拦截逻辑的 IP 组 |
-| [ip-threat-blacklist.md](ip-threat-blacklist) | 🔴 高风险 | 分析 7 层高集中度威胁 IP，执行 IP 黑名单拉黑（写操作需二次确认） |
+| [security-weekly-report.md](security-weekly-report) | 🟢 Low risk | Periodically generate security configuration snapshots to detect abnormal policy changes |
+| [security-template-audit.md](security-template-audit) | 🟢 Low risk | Audit security policy template coverage, find domains without bound templates |
+| [domain-blacklist-inspector.md](domain-blacklist-inspector) | 🟢 Low risk | Query security policies associated with a specific domain, identify IP groups serving as blocklists |
+| [ip-threat-blacklist.md](ip-threat-blacklist) | 🔴 High risk | Analyze L7 high-concentration threat IPs, execute IP blocklist banning (write operations require double confirmation) |
 
-## 参考链接
+## Reference Links
 
-- [EdgeOne 产品文档](https://cloud.tencent.com/document/product/1552)
-- [EdgeOne API 文档](https://cloud.tencent.com/document/api/1552)
-- [API 调用指引](../api/README.md)
+- [EdgeOne Product Documentation](https://cloud.tencent.com/document/product/1552)
+- [EdgeOne API Documentation](https://cloud.tencent.com/document/api/1552)
+- [API Calling Guide](../api/README.md)
