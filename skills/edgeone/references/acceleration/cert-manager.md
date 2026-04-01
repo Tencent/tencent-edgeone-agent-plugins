@@ -1,188 +1,188 @@
-# 证书自动化管理
+# Certificate Automation Management
 
-管理 EdgeOne 域名的 HTTPS 证书：查询证书状态、申请免费证书、部署自有证书。
+Manage EdgeOne domain HTTPS certificates: query certificate status, apply for free certificates, deploy custom certificates.
 
-## 场景 A：查询证书状态
+## Scenario A: Query Certificate Status
 
-**触发**：用户想查看证书列表、检查过期时间。
+**Trigger**: User wants to view certificate list or check expiration time.
 
-### A1：定位目标站点
+### A1: Locate Target Site
 
-调用 `DescribeZones`，用 `zone-name` 过滤条件匹配用户指定的站点名称。
+Call `DescribeZones`, using `zone-name` filter to match the site name specified by the user.
 
-> **重要**：过滤掉 `Status` 为 `initializing` 的站点（这些站点正在初始化中，尚未完成创建）。
+> **Important**: Filter out sites with `Status` as `initializing` (these sites are still initializing and haven't completed creation).
 
-根据返回结果分三种情况处理：
+Handle based on results in three cases:
 
-**情况一：仅匹配到 1 个可用站点**
+**Case 1: Only 1 available site matched**
 
-直接使用该站点的 `ZoneId`，进入 A2。
+Directly use this site's `ZoneId`, proceed to A2.
 
-**情况二：匹配到多个同名站点**
+**Case 2: Multiple sites with same name matched**
 
-向用户展示所有**可用**的匹配结果，列出关键信息供区分，**等待用户明确选择后**再继续：
+Display all **available** matching results to user, listing key information for distinction, **wait for user's explicit selection** before continuing:
 
 ```
-找到多个名为 "xxx.com" 的站点，请确认要查询哪一个：
+Found multiple sites named "xxx.com", please confirm which one to query:
 
-  1. ZoneId: zone-aaa  别名: prod   接入模式: NS接入   创建时间: 2024-01-01
-  2. ZoneId: zone-bbb  别名: test   接入模式: CNAME接入  创建时间: 2025-06-01
+  1. ZoneId: zone-aaa  Alias: prod   Access Mode: NS Access   Created: 2024-01-01
+  2. ZoneId: zone-bbb  Alias: test   Access Mode: CNAME Access  Created: 2025-06-01
 
-请回复序号或 ZoneId。
+Please reply with the number or ZoneId.
 ```
 
-> 收到用户回复后，使用用户选定的 `ZoneId` 进入 A2。
+> After receiving user's response, use the selected `ZoneId` to proceed to A2.
 
-**情况三：没有可用站点**
+**Case 3: No available sites**
 
-提示用户：\"未找到可用的站点 'xxx.com'，请检查站点名称或等待站点初始化完成。\"
+Prompt user: "No available site 'xxx.com' found, please check the site name or wait for site initialization to complete."
 
-### A2：查询域名证书信息
+### A2: Query Domain Certificate Information
 
-调用 `DescribeAccelerationDomains`，从响应的 `AccelerationDomains[].Certificate` 字段读取每条域名的证书信息。
+Call `DescribeAccelerationDomains`, read certificate information for each domain from the `AccelerationDomains[].Certificate` field in the response.
 
-> 可通过 `Filters.domain-name` 指定查询某个域名，不传 Filters 则返回站点下所有域名。
+> You can specify a domain to query via `Filters.domain-name`; not passing Filters returns all domains under the site.
 
-每条域名的 `Certificate` 结构关键字段：
+Key fields in each domain's `Certificate` structure:
 
-| 字段 | 含义 |
+| Field | Meaning |
 |---|---|
-| `Certificate.Mode` | 证书配置模式：`disable` / `eofreecert` / `eofreecert_manual` / `sslcert` |
-| `Certificate.List[].CertId` | 证书 ID |
-| `Certificate.List[].Alias` | 证书备注名 |
-| `Certificate.List[].Type` | 证书类型：`default` / `upload` / `managed` |
-| `Certificate.List[].ExpireTime` | 到期时间 |
-| `Certificate.List[].Status` | 部署状态：`deployed` / `processing` / `applying` / `failed` / `issued` |
-| `Certificate.List[].SignAlgo` | 签名算法 |
+| `Certificate.Mode` | Certificate configuration mode: `disable` / `eofreecert` / `eofreecert_manual` / `sslcert` |
+| `Certificate.List[].CertId` | Certificate ID |
+| `Certificate.List[].Alias` | Certificate alias |
+| `Certificate.List[].Type` | Certificate type: `default` / `upload` / `managed` |
+| `Certificate.List[].ExpireTime` | Expiration time |
+| `Certificate.List[].Status` | Deployment status: `deployed` / `processing` / `applying` / `failed` / `issued` |
+| `Certificate.List[].SignAlgo` | Signature algorithm |
 
-**输出建议**：以表格形式展示各域名的证书信息，标注即将过期（≤30 天）或状态异常（`failed` / `applying`）的条目。
+**Output suggestion**: Display certificate information for each domain in table format, marking entries that are about to expire (≤30 days) or have abnormal status (`failed` / `applying`).
 
-## 场景 B：申请并部署免费证书
+## Scenario B: Apply and Deploy Free Certificate
 
-**触发**：用户说"申请免费证书"、"证书快过期了"、"续签证书"。
+**Trigger**: User says "apply for free certificate", "certificate is expiring soon", "renew certificate".
 
-### B0：定位目标站点
+### B0: Locate Target Site
 
-若用户未直接提供 ZoneId，调用 `DescribeZones` 用 `zone-name` 过滤条件匹配用户指定的站点名称。
+If user hasn't directly provided ZoneId, call `DescribeZones` using `zone-name` filter to match the site name specified by the user.
 
-> **重要**：过滤掉 `Status` 为 `initializing` 的站点（这些站点正在初始化中，尚未完成创建）。
+> **Important**: Filter out sites with `Status` as `initializing` (these sites are still initializing and haven't completed creation).
 
-- **仅匹配到 1 个可用站点**：直接使用该站点的 `ZoneId`，进入 B1。
-- **匹配到多个同名站点**：向用户展示所有**可用**的匹配结果，**等待用户明确选择后**再继续（展示格式同场景 A）。
-- **没有可用站点**：提示用户：\"未找到可用的站点 'xxx.com'，请检查站点名称或等待站点初始化完成。\"
+- **Only 1 available site matched**: Directly use this site's `ZoneId`, proceed to B1.
+- **Multiple sites with same name matched**: Display all **available** matching results to user, **wait for explicit selection** before continuing (display format same as Scenario A).
+- **No available sites**: Prompt user: "No available site 'xxx.com' found, please check the site name or wait for site initialization to complete."
 
-### 接入模式判断
+### Access Mode Determination
 
-调用 `DescribeZones` 结果同时用于判断接入模式（`Type` 字段），根据结果走不同路线：
+The result of calling `DescribeZones` is also used to determine the access mode (`Type` field), taking different routes based on the result:
 
-| 接入模式 | 免费证书申请方式 |
+| Access Mode | Free Certificate Application Method |
 |---|---|
-| NS 接入 / DNSPod 托管 | **自动验证**——直接调用 ModifyHostsCertificate |
-| CNAME 接入 | **手动验证**——需先 ApplyFreeCertificate，完成验证后再部署 |
+| NS Access / DNSPod Hosting | **Automatic Validation** — Directly call ModifyHostsCertificate |
+| CNAME Access | **Manual Validation** — Need to call ApplyFreeCertificate first, complete validation, then deploy |
 
-### B1：NS 接入 / DNSPod 托管（自动验证）
+### B1: NS Access / DNSPod Hosting (Automatic Validation)
 
-调用 `ModifyHostsCertificate`。
+Call `ModifyHostsCertificate`.
 
-> **确认提示**：部署证书会影响域名的 HTTPS 服务，执行前需向用户确认。
+> **Confirmation Prompt**: Deploying certificate will affect the domain's HTTPS service, need user confirmation before execution.
 
-### B2：CNAME 接入（手动验证）
+### B2: CNAME Access (Manual Validation)
 
-需要 4 步：
+Requires 4 steps:
 
-**步骤 1**：调用 `ApplyFreeCertificate` 发起申请。
+**Step 1**: Call `ApplyFreeCertificate` to initiate application.
 
-**步骤 2**：根据响应中的验证信息，告知用户完成配置。
+**Step 2**: Based on validation information in response, inform user to complete configuration.
 
-> 告知用户后**等待用户确认已完成配置**，再继续下一步。
+> After informing user, **wait for user to confirm configuration completion** before continuing to next step.
 
-**步骤 3**：调用 `CheckFreeCertificateVerification` 检查验证结果
+**Step 3**: Call `CheckFreeCertificateVerification` to check validation result
 
-- 成功：响应中包含证书信息，说明证书已签发
-- 失败：需检查验证配置是否正确
+- Success: Response contains certificate information, indicating certificate has been issued
+- Failure: Need to check if validation configuration is correct
 
-**步骤 4**：调用 `ModifyHostsCertificate` 部署免费证书。
+**Step 4**: Call `ModifyHostsCertificate` to deploy free certificate.
 
-> **确认提示**：部署证书会影响域名的 HTTPS 服务，执行前需向用户确认。
+> **Confirmation Prompt**: Deploying certificate will affect the domain's HTTPS service, need user confirmation before execution.
 
-## 场景 C：部署自有证书
+## Scenario C: Deploy Custom Certificate
 
-**触发**：用户说"配置自有证书"、"上传的证书"、提供了 CertId。
+**Trigger**: User says "configure custom certificate", "uploaded certificate", or provides CertId.
 
-### C0：定位目标站点
+### C0: Locate Target Site
 
-若用户未直接提供 ZoneId，调用 `DescribeZones` 用 `zone-name` 过滤条件匹配用户指定的站点名称。
+If user hasn't directly provided ZoneId, call `DescribeZones` using `zone-name` filter to match the site name specified by the user.
 
-> **重要**：过滤掉 `Status` 为 `initializing` 的站点（这些站点正在初始化中，尚未完成创建）。
+> **Important**: Filter out sites with `Status` as `initializing` (these sites are still initializing and haven't completed creation).
 
-- **仅匹配到 1 个可用站点**：直接使用该站点的 `ZoneId`，进入下一步。
-- **匹配到多个同名站点**：向用户展示所有**可用**的匹配结果，**等待用户明确选择后**再继续（展示格式同场景 A）。
-- **没有可用站点**：提示用户：\"未找到可用的站点 'xxx.com'，请检查站点名称或等待站点初始化完成。\"
+- **Only 1 available site matched**: Directly use this site's `ZoneId`, proceed to next step.
+- **Multiple sites with same name matched**: Display all **available** matching results to user, **wait for explicit selection** before continuing (display format same as Scenario A).
+- **No available sites**: Prompt user: "No available site 'xxx.com' found, please check the site name or wait for site initialization to complete."
 
-### C1：查询适用于目标域名的 SSL 证书
+### C1: Query SSL Certificates Applicable to Target Domain
 
-若用户未提供 CertId，或希望从已有证书中选择，调用 `ssl:DescribeCertificates` 查询证书列表，再筛选出适用于目标域名的证书。
+If user hasn't provided CertId, or wants to select from existing certificates, call `ssl:DescribeCertificates` to query certificate list, then filter out certificates applicable to the target domain.
 
-**调用参数建议**：
-- `SearchKey`：传入目标域名（如 `a-1.qcdntest.com`），可模糊匹配域名字段，缩小返回范围
-- `CertificateType`：传 `SVR`，只查服务器证书（排除客户端 CA 证书）
-- `Limit`：建议传 `1000` 确保不遗漏
+**Call Parameter Suggestions**:
+- `SearchKey`: Pass in target domain (e.g., `a-1.qcdntest.com`), can fuzzy match domain field to narrow return range
+- `CertificateType`: Pass `SVR`, only query server certificates (exclude client CA certificates)
+- `Limit`: Suggest passing `1000` to ensure no omissions
 
-**筛选规则**：对返回的每张证书，检查 `SubjectAltName` 列表中是否有条目匹配目标域名：
+**Filter Rules**: For each returned certificate, check if any entry in the `SubjectAltName` list matches the target domain:
 
-| 匹配类型 | 说明 | 示例 |
+| Match Type | Description | Example |
 |---|---|---|
-| 精确匹配 | `SubjectAltName` 中有与目标域名完全相同的条目 | `a-1.qcdntest.com` |
-| 通配符匹配 | `SubjectAltName` 中有 `*.xxx` 条目，且目标域名是其直接子域名（只有一级） | `*.qcdntest.com` 匹配 `a-1.qcdntest.com` |
+| Exact Match | `SubjectAltName` has an entry exactly the same as target domain | `a-1.qcdntest.com` |
+| Wildcard Match | `SubjectAltName` has a `*.xxx` entry, and target domain is its direct subdomain (only one level) | `*.qcdntest.com` matches `a-1.qcdntest.com` |
 
-**可用性判断**：筛选出匹配证书后，结合以下字段标注每张证书的可用状态：
+**Availability Determination**: After filtering matching certificates, mark availability status for each certificate based on the following fields:
 
-| 字段 | 含义 | 可用条件 |
+| Field | Meaning | Availability Condition |
 |---|---|---|
-| `Status` | 证书状态 | 必须为 `1`（已通过） |
-| `CertEndTime` | 到期时间 | 距今 > 0 天（未过期） |
-| `Deployable` | 是否可部署 | 必须为 `true` |
+| `Status` | Certificate status | Must be `1` (Approved) |
+| `CertEndTime` | Expiration time | Days until today > 0 (Not expired) |
+| `Deployable` | Whether deployable | Must be `true` |
 
-**输出建议**：以表格展示所有匹配证书，标注可用性：
+**Output suggestion**: Display all matching certificates in a table, marking availability:
 
 ```
-适用于 a-1.qcdntest.com 的证书：
+Certificates applicable to a-1.qcdntest.com:
 
-证书ID       备注名         到期时间              剩余天数   状态      可部署   可用性
------------- -------------- -------------------- --------- -------- -------- ------
-zVq87w0D     my-cert        2032-09-23 05:10:56  2371 天   已通过    ✅       ✅ 可用
-QxbtGBIM     old-cert       2025-01-01 00:00:00  -86 天    已过期    ❌       ❌ 已过期
+Cert ID      Alias          Expiration           Days Left  Status     Deployable  Availability
+------------ -------------- -------------------- ---------- ---------- ----------- ------------
+zVq87w0D     my-cert        2032-09-23 05:10:56  2371 days  Approved   ✅          ✅ Available
+QxbtGBIM     old-cert       2025-01-01 00:00:00  -86 days   Expired    ❌          ❌ Expired
 ```
 
-若未找到任何匹配证书，告知用户需先前往 [SSL 证书控制台](https://console.cloud.tencent.com/ssl) 上传或申请覆盖该域名的证书。
+If no matching certificate is found, inform user that they need to first go to [SSL Certificate Console](https://console.cloud.tencent.com/ssl) to upload or apply for a certificate covering this domain.
 
-### C2：部署证书
+### C2: Deploy Certificate
 
-用户从 C1 结果中选定证书后，调用 `ModifyHostsCertificate`（`Mode=sslcert`，`ServerCertInfo[{CertId}]`）。
+After user selects certificate from C1 results, call `ModifyHostsCertificate` (`Mode=sslcert`, `ServerCertInfo[{CertId}]`).
 
-> **禁止自动部署**：**必须**向用户确认部署域名和证书 ID 后才能执行。
+> **No Automatic Deployment**: **Must** confirm deployment domain and certificate ID with user before execution.
 
-## 场景 D：批量证书巡检
+## Scenario D: Batch Certificate Inspection
 
-**触发**：用户说"检查所有域名的证书"、"哪些证书快过期了"。
+**Trigger**: User says "check certificates for all domains", "which certificates are expiring soon".
 
-### 流程
+### Process
 
-1. 调用 `DescribeZones` 获取所有站点
-   - **重要**：过滤掉 `Status` 为 `initializing` 的站点（这些站点正在初始化中，尚未完成创建）
-2. 对每个**可用**站点调用 `DescribeAccelerationDomains`，读取响应中每条 `AccelerationDomains[].Certificate` 字段获取证书信息
-3. 汇总输出，标注以下异常：
-   - `Certificate.List[].Status` 为 `failed` 或 `applying` 的证书
-   - `Certificate.List[].ExpireTime` 距今 ≤30 天的证书
-   - `Certificate.Mode` 为 `disable` 或 `Certificate` 为 null 的域名（未配置证书）
+1. Call `DescribeZones` to get all sites
+   - **Important**: Filter out sites with `Status` as `initializing` (these sites are still initializing and haven't completed creation)
+2. Call `DescribeAccelerationDomains` for each **available** site, read certificate information from each `AccelerationDomains[].Certificate` field in the response
+3. Summarize output, marking the following anomalies:
+   - Certificates with `Certificate.List[].Status` as `failed` or `applying`
+   - Certificates with `Certificate.List[].ExpireTime` ≤30 days from today
+   - Domains with `Certificate.Mode` as `disable` or `Certificate` is null (no certificate configured)
 
-### 输出格式建议
+### Output Format Suggestion
 
 ```markdown
-## 证书巡检报告
+## Certificate Inspection Report
 
-| 站点 | 域名 | 证书 ID | 到期时间 | 剩余天数 | 状态 |
+| Site | Domain | Cert ID | Expiration | Days Left | Status |
 |---|---|---|---|---|---|
-| example.com | *.example.com | teo-xxx | 2026-04-15 | 29 天 | 即将过期 |
-| example.com | api.example.com | teo-yyy | 2026-09-01 | 168 天 | 正常 |
+| example.com | *.example.com | teo-xxx | 2026-04-15 | 29 days | Expiring Soon |
+| example.com | api.example.com | teo-yyy | 2026-09-01 | 168 days | Normal |
 ```

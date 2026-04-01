@@ -1,34 +1,34 @@
-# DNSPod 集成 API 参考
+# DNSPod Integration API Reference
 
-EdgeOne 支持 DNSPod 托管接入模式，可以实现域名的一键接入和自动化配置。本文档说明相关 API 的调用方法。
+EdgeOne supports DNSPod hosting access mode, enabling one-click domain onboarding and automated configuration. This document explains how to call related APIs.
 
-## 查询域名托管状态
+## Query Domain Hosting Status
 
-### DescribeDomain（DNSPod）
+### DescribeDomain (DNSPod)
 
-**用途**：查询域名是否在 DNSPod 托管，以及托管状态是否满足 EdgeOne 接入条件。
+**Purpose**: Query whether domain is hosted in DNSPod and if hosting status meets EdgeOne access conditions.
 
-**调用示例**：
+**Invocation Example**:
 
 ```bash
 tccli dnspod DescribeDomain --Domain "example.com"
 ```
 
-**关键响应字段**：
+**Key Response Fields**:
 
 ```json
 {
   "DomainInfo": {
     "Domain": "example.com",
     "DomainId": 12345678,
-    "Status": "ENABLE",        // 域名状态：ENABLE(正常)、PAUSE(暂停)、SPAM(封禁)
-    "DnsStatus": "",           // DNS 状态：空字符串(正常)、"dnserror"(异常)
-    "Grade": "DP_Pro",         // 套餐等级
-    "DnspodNsList": [          // DNSPod 的 NS 列表
+    "Status": "ENABLE",        // Domain status: ENABLE(normal), PAUSE(paused), SPAM(blocked)
+    "DnsStatus": "",           // DNS status: empty string(normal), "dnserror"(abnormal)
+    "Grade": "DP_Pro",         // Plan level
+    "DnspodNsList": [          // DNSPod's NS list
       "ns1.dnspod.net",
       "ns2.dnspod.net"
     ],
-    "ActualNsList": [          // 域名实际使用的 NS
+    "ActualNsList": [          // Actual NS used by domain
       "ns1.dnspod.net",
       "ns2.dnspod.net"
     ]
@@ -36,39 +36,39 @@ tccli dnspod DescribeDomain --Domain "example.com"
 }
 ```
 
-**EdgeOne 接入条件判断**：
+**EdgeOne Access Condition Determination**:
 
-域名满足以下所有条件时，可使用 DNSPod 托管接入：
+Domain can use DNSPod hosting access when meeting all of the following conditions:
 
-1. ✅ 域名存在（接口调用成功）
-2. ✅ `Status` 字段为 `"ENABLE"` 或 `"LOCK"`
-3. ✅ `DnsStatus` 字段为空字符串 `""`
+1. ✅ Domain exists (interface call succeeds)
+2. ✅ `Status` field is `"ENABLE"` or `"LOCK"`
+3. ✅ `DnsStatus` field is empty string `""`
 
-**常见错误处理**：
+**Common Error Handling**:
 
-| 错误码 | 说明 | 处理方式 |
+| Error Code | Description | Handling Method |
 |--------|------|----------|
-| `ResourceNotFound.NoDataOfDomain` | 域名不存在于 DNSPod | 不展示 DNSPod 托管接入选项 |
-| `OperationDenied.DNSPodUnauthorizedRoleOperation` | 缺少服务授权 | 尝试自动创建服务授权角色 |
-| `UnauthorizedOperation` | 用户无 DNSPod 接口权限 | 不展示 DNSPod 托管接入选项 |
+| `ResourceNotFound.NoDataOfDomain` | Domain doesn't exist in DNSPod | Don't display DNSPod hosting access option |
+| `OperationDenied.DNSPodUnauthorizedRoleOperation` | Missing service authorization | Try to automatically create service authorization role |
+| `UnauthorizedOperation` | User lacks DNSPod interface permission | Don't display DNSPod hosting access option |
 
-## 创建服务授权角色
+## Create Service-Linked Role
 
-### CreateServiceLinkedRole（CAM）
+### CreateServiceLinkedRole (CAM)
 
-**用途**：为用户创建 EdgeOne 访问 DNSPod 的服务授权角色。
+**Purpose**: Create service authorization role for EdgeOne to access DNSPod for user.
 
-**触发场景**：调用 `DescribeDomain` 接口返回 `OperationDenied.DNSPodUnauthorizedRoleOperation` 错误时。
+**Trigger Scenario**: When calling `DescribeDomain` interface returns `OperationDenied.DNSPodUnauthorizedRoleOperation` error.
 
-**调用示例**：
+**Invocation Example**:
 
 ```bash
 tccli cam CreateServiceLinkedRole \
   --QCSServiceName '["DnspodaccesEO.TEO.cloud.tencent.com"]' \
-  --Description "当前角色为边缘安全加速平台(TEO)服务相关角色，该角色将在已关联策略的权限范围内查询您在DNSPod产品内已接入的域名状态以及相关解析记录，并在一键修改解析的场景下帮助您快速完成解析修改将加速服务切换至EO"
+  --Description "This role is a service-linked role for Tencent EdgeOne Platform (TEO). This role will query your domain status and related DNS records in DNSPod within the permission scope of associated policies, and help you quickly complete DNS modification to switch acceleration service to EO in one-click DNS modification scenarios"
 ```
 
-**响应示例**：
+**Response Example**:
 
 ```json
 {
@@ -77,124 +77,124 @@ tccli cam CreateServiceLinkedRole \
 }
 ```
 
-**后续操作**：
+**Follow-up Actions**:
 
-- ✅ 若创建成功：重新调用 `DescribeDomain` 检测域名状态
-- ❌ 若创建失败：启用兜底模式，不展示 DNSPod 托管接入选项
+- ✅ If creation succeeds: Retry calling `DescribeDomain` to detect domain status
+- ❌ If creation fails: Enable fallback mode, don't display DNSPod hosting access option
 
-## DNSPod 托管接入流程
+## DNSPod Hosting Access Process
 
-### 完整调用流程
+### Complete Invocation Flow
 
 ```mermaid
 graph TD
-    A[开始接入] --> B[调用 DescribeDomain]
-    B --> C{域名存在?}
-    C -->|否| D[不展示 DNSPod 托管接入]
-    C -->|是| E{Status 和 DnsStatus 满足条件?}
-    E -->|否| D
-    E -->|是| F[展示 DNSPod 托管接入为首选]
-    B --> G{错误码为授权错误?}
-    G -->|是| H[调用 CreateServiceLinkedRole]
-    H --> I{创建成功?}
-    I -->|是| B
-    I -->|否| D
-    G -->|否| J{其他权限错误?}
-    J -->|是| D
-    F --> K[用户选择 DNSPod 托管接入]
-    K --> L[调用 CreateZone Type=dnspod]
-    L --> M[自动完成归属权验证]
-    M --> N[添加加速域名]
+    A[Start Access] --> B[Call DescribeDomain]
+    B --> C{Domain Exists?}
+    C -->|No| D[Don't Display DNSPod Hosting Access]
+    C -->|Yes| E{Status and DnsStatus Meet Conditions?}
+    E -->|No| D
+    E -->|Yes| F[Display DNSPod Hosting Access as Preferred]
+    B --> G{Error Code is Authorization Error?}
+    G -->|Yes| H[Call CreateServiceLinkedRole]
+    H --> I{Creation Succeeds?}
+    I -->|Yes| B
+    I -->|No| D
+    G -->|No| J{Other Permission Errors?}
+    J -->|Yes| D
+    F --> K[User Selects DNSPod Hosting Access]
+    K --> L[Call CreateZone Type=dnspod]
+    L --> M[Automatically Complete Ownership Verification]
+    M --> N[Add Acceleration Domain]
 ```
 
-### 接入模式参数
+### Access Mode Parameters
 
-在调用 `CreateZone` 时，`Type` 参数的可选值：
+When calling `CreateZone`, optional values for `Type` parameter:
 
-- `dnspod`：DNSPod 托管接入
-- `full`：NS 接入
-- `partial`：CNAME 接入
+- `dnspod`: DNSPod hosting access
+- `full`: NS access
+- `partial`: CNAME access
 
-**推荐策略**：
+**Recommendation Strategy**:
 
-1. 优先检测是否满足 DNSPod 托管接入条件
-2. 若满足，将 `dnspod` 作为**首选推荐**展示给用户
-3. 始终提供 `full` 和 `partial` 作为备选方案
+1. Prioritize detecting if DNSPod hosting access conditions are met
+2. If met, display `dnspod` as **preferred recommendation** to user
+3. Always provide `full` and `partial` as alternative options
 
-## 最佳实践
+## Best Practices
 
-### 1. 静默检测，智能推荐
+### 1. Silent Detection, Smart Recommendation
 
 ```python
-# 伪代码示例
+# Pseudo-code example
 def get_available_access_types(domain):
     access_types = []
     
-    # 尝试检测 DNSPod 托管状态
+    # Try to detect DNSPod hosting status
     try:
         response = dnspod.DescribeDomain(Domain=domain)
         domain_info = response['DomainInfo']
         
-        # 判断是否满足条件
+        # Determine if conditions are met
         if (domain_info['Status'] in ['ENABLE', 'LOCK'] and 
             domain_info['DnsStatus'] == ''):
             access_types.append({
                 'type': 'dnspod',
-                'name': 'DNSPod 托管接入',
+                'name': 'DNSPod Hosting Access',
                 'recommended': True,
-                'description': '无需手动配置，自动完成验证'
+                'description': 'No manual configuration needed, automatically completes validation'
             })
     
     except DNSPodUnauthorizedRoleOperation:
-        # 尝试自动授权
+        # Try automatic authorization
         try:
             cam.CreateServiceLinkedRole(...)
-            # 重试检测
+            # Retry detection
             return get_available_access_types(domain)
         except:
-            pass  # 授权失败，使用兜底方案
+            pass  # Authorization failed, use fallback plan
     
     except:
-        pass  # 其他错误，使用兜底方案
+        pass  # Other errors, use fallback plan
     
-    # 兜底：始终提供 NS 和 CNAME 接入
+    # Fallback: Always provide NS and CNAME access
     access_types.extend([
-        {'type': 'full', 'name': 'NS 接入'},
-        {'type': 'partial', 'name': 'CNAME 接入'}
+        {'type': 'full', 'name': 'NS Access'},
+        {'type': 'partial', 'name': 'CNAME Access'}
     ])
     
     return access_types
 ```
 
-### 2. 用户体验优化
+### 2. User Experience Optimization
 
-**向用户展示时的建议话术**：
+**Suggested Wording When Displaying to User**:
 
-✅ **满足 DNSPod 托管条件时**：
+✅ **When DNSPod Hosting Conditions Are Met**:
 
-> 检测到您的域名 `example.com` 已在 DNSPod 托管，推荐使用 **DNSPod 托管接入**模式，可以自动完成验证和配置，无需手动操作 DNS。
+> Detected that your domain `example.com` is hosted in DNSPod. Recommend using **DNSPod Hosting Access** mode, which can automatically complete validation and configuration without manual DNS operations.
 > 
-> 您也可以选择其他接入模式：
-> - NS 接入：需要修改域名的 NS 记录
-> - CNAME 接入：需要添加 TXT 记录验证归属权
+> You can also choose other access modes:
+> - NS Access: Need to modify domain's NS record
+> - CNAME Access: Need to add TXT record to verify ownership
 
-❌ **不满足 DNSPod 托管条件时**：
+❌ **When DNSPod Hosting Conditions Are Not Met**:
 
-> 请选择接入模式：
-> - NS 接入：EdgeOne 完全接管 DNS 解析
-> - CNAME 接入：仅配置 CNAME 记录，不改变 NS
+> Please select access mode:
+> - NS Access: EdgeOne fully takes over DNS resolution
+> - CNAME Access: Only configure CNAME record, NS unchanged
 
-### 3. 错误处理建议
+### 3. Error Handling Suggestions
 
-| 场景 | 用户提示 | 技术处理 |
+| Scenario | User Prompt | Technical Handling |
 |------|----------|----------|
-| 域名不在 DNSPod | 不提示，直接提供 NS/CNAME 选项 | 静默处理 |
-| 缺少服务授权 | "正在为您配置服务授权..." | 自动调用 CreateServiceLinkedRole |
-| 授权创建失败 | 不提示，直接提供 NS/CNAME 选项 | 静默回退到兜底方案 |
-| 域名状态异常 | 不提示，直接提供 NS/CNAME 选项 | 静默处理 |
+| Domain Not in DNSPod | No prompt, directly provide NS/CNAME options | Handle silently |
+| Missing Service Authorization | "Configuring service authorization for you..." | Automatically call CreateServiceLinkedRole |
+| Authorization Creation Failed | No prompt, directly provide NS/CNAME options | Silently fall back to fallback plan |
+| Domain Status Abnormal | No prompt, directly provide NS/CNAME options | Handle silently |
 
-## 参考资料
+## Reference Materials
 
-- [DNSPod API 文档](https://cloud.tencent.com/document/product/1427)
-- [CAM 服务相关角色](https://cloud.tencent.com/document/product/598/19388)
-- [EdgeOne CreateZone 接口](https://cloud.tencent.com/document/product/1552/80719)
+- [DNSPod API Documentation](https://cloud.tencent.com/document/product/1427)
+- [CAM Service-Linked Roles](https://cloud.tencent.com/document/product/598/19388)
+- [EdgeOne CreateZone Interface](https://cloud.tencent.com/document/product/1552/80719)

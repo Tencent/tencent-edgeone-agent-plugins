@@ -1,244 +1,244 @@
-# 缓存刷新与预热
+# Cache Purge and Prefetch
 
-管理 EdgeOne 节点缓存：查询配额、刷新缓存（URL / 目录 / Host / 全部 / Cache Tag）、URL 预热、查询任务进度。支持从文件 / 粘贴批量输入 URL。
+Manage EdgeOne node cache: query quotas, purge cache (URL / Directory / Host / All / Cache Tag), prefetch URLs, and check task progress. Supports batch URL input from files or paste.
 
-## 核心交互规范
+## Core Interaction Guidelines
 
-1. **站点选择与确认**：执行任何缓存操作前，必须先让用户确认要操作的站点（见场景 0）
-2. **提交前必查配额**：执行 CreatePurgeTask / CreatePrefetchTask 前，先调用 DescribeContentQuota 展示配额剩余量，若剩余不足则提醒用户
-3. **批量 URL 输入**：支持用户从文件或粘贴方式批量输入 URL（见场景 E）
-4. **轮询任务进度**：提交任务后主动查询进度，直到任务完成或超时
+1. **Site Selection and Confirmation**: Before executing any cache operation, users must first confirm the target site (see Scenario 0)
+2. **Check Quota Before Submission**: Before executing CreatePurgeTask / CreatePrefetchTask, call DescribeContentQuota to display remaining quota; warn users if insufficient
+3. **Batch URL Input**: Support users to input URLs in batch from files or by pasting (see Scenario E)
+4. **Poll Task Progress**: Actively query progress after task submission until completion or timeout
 
-## 场景 0：选择站点
+## Scenario 0: Select Site
 
-**触发**：用户请求刷新缓存或预热 URL 前，必须先确认操作的目标站点。
+**Trigger**: Before users request cache purge or URL prefetch, the target site must be confirmed first.
 
-**步骤**：
+**Steps**:
 
-1. **调用 DescribeZones 查询站点列表**
-   - **重要**：过滤掉 `Status` 为 `initializing` 的站点（这些站点正在初始化中，尚未完成创建）
-   - 仅展示可用的站点
+1. **Call DescribeZones to query site list**
+   - **Important**: Filter out sites with `Status` as `initializing` (these sites are still initializing and haven't completed creation)
+   - Only display available sites
 
-2. **判断站点数量**：
+2. **Determine the number of sites**:
    
-   **a) 只有一个站点**
-   - 直接使用该站点，无需用户选择
-   - 继续后续操作
+   **a) Only one site**
+   - Directly use this site without user selection
+   - Continue to subsequent operations
 
-   **b) 有多个站点**
-   - 列出所有可用站点，包括：
-     - 站点域名 (ZoneName)
-     - 同名站点标识符 (AliasZoneName，如有)
-     - 站点 ID (ZoneId)
-     - 接入模式 (Type)
-   - 引导用户选择要操作的站点
+   **b) Multiple sites**
+   - List all available sites, including:
+     - Site domain name (ZoneName)
+     - Alias Zone Name (AliasZoneName, if any)
+     - Site ID (ZoneId)
+     - Access mode (Type)
+   - Guide users to select the site to operate on
 
-   **c) 没有可用站点**
-   - 提示用户："当前账号下没有可用站点，请先创建站点"
-   - 终止操作
+   **c) No available sites**
+   - Prompt user: "No available sites under current account, please create a site first"
+   - Terminate operation
 
-3. **处理同名站点**：
-   - 若存在多个同名站点（相同 ZoneName），必须通过 `AliasZoneName`（同名站点标识符）区分
-   - 展示格式：`站点域名 (标识符)` 或 `站点域名 [标识符]`
-   - 示例：`example.com (prod)` 和 `example.com (test)`
+3. **Handle sites with same name**:
+   - If multiple sites with the same name exist (same ZoneName), they must be distinguished by `AliasZoneName` (Alias Zone Name identifier)
+   - Display format: `Site domain (identifier)` or `Site domain [identifier]`
+   - Example: `example.com (prod)` and `example.com (test)`
 
-4. **获取站点 ID**：
-   - 用户确认站点后，记录该站点的 `ZoneId`
-   - 后续所有 API 调用都使用该 `ZoneId`
+4. **Get Site ID**:
+   - After user confirms the site, record the site's `ZoneId`
+   - All subsequent API calls use this `ZoneId`
 
-> **重要提示**：
-> - 站点选择是所有缓存操作的前置步骤，不可跳过
-> - 同名站点标识符 (AliasZoneName) 用于区分使用不同接入模式（CNAME、DNSPod 托管）创建的同名站点
-> - 若用户在请求中明确指定了站点域名或标识符，可直接使用该信息查询对应站点
+> **Important Notes**:
+> - Site selection is a prerequisite for all cache operations and cannot be skipped
+> - Alias Zone Name (AliasZoneName) is used to distinguish sites with the same name created with different access modes (CNAME, DNSPod hosting)
+> - If the user explicitly specifies the site domain or identifier in the request, you can directly use this information to query the corresponding site
 
-## 场景 A：查询配额
+## Scenario A: Query Quota
 
-**触发**：用户说"还能刷新多少条"、"查看配额"、"预热额度还剩多少"。
+**Trigger**: User says "how many more can I purge", "check quota", "how much prefetch quota left".
 
-> **前置步骤**（可选）：若用户未指定站点，可先完成 [场景 0：选择站点](#场景-0选择站点)
+> **Prerequisite** (optional): If user hasn't specified a site, complete [Scenario 0: Select Site](#scenario-0-select-site) first
 
-调用 `DescribeContentQuota`，传入参数：
-- `ZoneId`：站点 ID（可选，不传则查询账号级别配额）
+Call `DescribeContentQuota`, passing parameters:
+- `ZoneId`: Site ID (optional, query account-level quota if not provided)
 
-**输出建议**：以表格展示各类型配额用量，标注剩余不足 10% 的类型。
+**Output suggestion**: Display quota usage for each type in a table, marking types with less than 10% remaining.
 
-## 场景 B：缓存刷新
+## Scenario B: Cache Purge
 
-**触发**：用户说"刷新缓存"、"清除 CDN 缓存"、"purge URL"、"刷新目录"、"清全站缓存"。
+**Trigger**: User says "purge cache", "clear CDN cache", "purge URL", "purge directory", "purge entire site".
 
-> **前置步骤**：
-> 1. 完成 [场景 0：选择站点](#场景-0选择站点)，确认要操作的站点
-> 2. 调用 DescribeAccelerationDomains 确认站点下有可用的加速域名
-> 3. 调用 DescribeContentQuota（场景 A）展示配额剩余量，若对应类型配额不足则提醒用户
+> **Prerequisites**:
+> 1. Complete [Scenario 0: Select Site](#scenario-0-select-site) to confirm the site to operate on
+> 2. Call DescribeAccelerationDomains to confirm available acceleration domains under the site
+> 3. Call DescribeContentQuota (Scenario A) to display remaining quota; warn user if insufficient for the corresponding type
 
-### B1：确认刷新类型和方法
+### B1: Confirm Purge Type and Method
 
-在执行刷新前，**必须**让用户确认以下信息：
+Before executing purge, **must** have users confirm the following information:
 
-#### 1. 刷新类型 (Type)
+#### 1. Purge Type
 
-| 类型 | 参数值 | 说明 | 影响范围 |
+| Type | Parameter Value | Description | Impact Scope |
 |------|--------|------|----------|
-| **URL 刷新** | `purge_url` | 刷新指定的 URL | 精确匹配的 URL |
-| **目录刷新** | `purge_prefix` | 刷新指定目录下的所有资源 | 目录及其子目录下的所有文件 |
-| **Hostname 刷新** | `purge_host` | 刷新指定域名下的所有资源 | 整个加速域名的所有缓存 |
-| **全站刷新** | `purge_all` | 刷新站点下所有资源 | ⚠️ 站点所有节点的全部缓存 |
-| **Cache Tag 刷新** | `purge_cache_tag` | 按缓存标签刷新 | 带有指定标签的所有缓存 |
+| **URL Purge** | `purge_url` | Purge specified URLs | Exactly matched URLs |
+| **Directory Purge** | `purge_prefix` | Purge all resources under specified directory | All files under directory and subdirectories |
+| **Hostname Purge** | `purge_host` | Purge all resources under specified domain | All cache of the entire acceleration domain |
+| **Full Site Purge** | `purge_all` | Purge all resources under the site | ⚠️ All cache on all nodes of the site |
+| **Cache Tag Purge** | `purge_cache_tag` | Purge by cache tag | All cache with specified tags |
 
-#### 2. 刷新方法 (Method)
+#### 2. Purge Method
 
-刷新方法**仅在以下三种刷新类型时有效**：
-- ✅ **目录刷新** (`purge_prefix`)
-- ✅ **Hostname 刷新** (`purge_host`)
-- ✅ **全站刷新** (`purge_all`)
+Purge method is **only valid for the following three purge types**:
+- ✅ **Directory Purge** (`purge_prefix`)
+- ✅ **Hostname Purge** (`purge_host`)
+- ✅ **Full Site Purge** (`purge_all`)
 
-其他刷新类型（URL 刷新、Cache Tag 刷新）不支持刷新方法参数。
+Other purge types (URL purge, Cache Tag purge) do not support the purge method parameter.
 
-**可选值**：
+**Available Values**:
 
-| 方法 | 参数值 | 说明 | 推荐场景 |
+| Method | Parameter Value | Description | Recommended Scenario |
 |------|--------|------|----------|
-| **使缓存失效** | `invalidate` | 标记缓存为过期，下次请求时回源验证 | 默认方式，对源站压力较小 |
-| **删除缓存** | `delete` | 直接删除缓存，下次请求必定回源 | 紧急更新、强制刷新场景 |
+| **Invalidate Cache** | `invalidate` | Mark cache as expired, validate with origin on next request | Default method, less pressure on origin |
+| **Delete Cache** | `delete` | Directly delete cache, always fetch from origin on next request | Emergency updates, forced refresh scenarios |
 
-> **重要说明**：
-> - `invalidate` 方法会保留缓存但标记为过期，下次请求时通过 If-Modified-Since 等机制回源验证，若内容未变化可继续使用缓存
-> - `delete` 方法会直接删除缓存，所有后续请求都将回源拉取，短时间内会增加源站负载
+> **Important Notes**:
+> - The `invalidate` method keeps the cache but marks it as expired; on the next request, it validates with the origin through mechanisms like If-Modified-Since, and can continue using cache if content hasn't changed
+> - The `delete` method directly deletes the cache; all subsequent requests will fetch from origin, which will increase origin load in a short time
 
-#### 3. 用户确认流程
+#### 3. User Confirmation Process
 
-**提示用户**：
-1. 展示刷新类型及其影响范围
-2. 若选择 `purge_prefix`、`purge_host` 或 `purge_all`，询问刷新方法
-3. 若选择 `purge_all`（全站刷新），**必须**特别警告：
-   > ⚠️ **全站刷新是高影响操作**：将清除该站点所有节点缓存，短时间内大量请求将回源，可能造成源站压力骤增。请确认是否继续？
+**Prompt user**:
+1. Display purge types and their impact scope
+2. If selecting `purge_prefix`, `purge_host`, or `purge_all`, ask about purge method
+3. If selecting `purge_all` (full site purge), **must** specially warn:
+   > ⚠️ **Full site purge is a high-impact operation**: It will clear all node cache of this site; in a short time, a large number of requests will fetch from origin, which may cause origin pressure to surge. Please confirm whether to continue?
 
-4. 等待用户明确确认后再执行
+4. Wait for user's explicit confirmation before executing
 
-> **禁止自动刷新**：缓存刷新会使节点缓存失效，后续请求将回源拉取最新内容，可能增加源站负载。**必须**向用户说明刷新类型和影响范围，并等待用户明确确认后才能执行。
+> **No automatic purge**: Cache purge will invalidate node cache; subsequent requests will fetch the latest content from origin, which may increase origin load. **Must** explain the purge type and impact scope to users and wait for explicit confirmation before execution.
 
-### B2：执行刷新
+### B2: Execute Purge
 
-**调用** `CreatePurgeTask`，传入参数：
-- `ZoneId`：站点 ID（来自场景 0）
-- `Type`：刷新类型
-- `Method`：刷新方法（仅当 Type 为 `purge_prefix`、`purge_host` 或 `purge_all` 时有效）
-- `Targets`：要刷新的 URL / 目录 / 域名列表
+**Call** `CreatePurgeTask`, passing parameters:
+- `ZoneId`: Site ID (from Scenario 0)
+- `Type`: Purge type
+- `Method`: Purge method (only valid when Type is `purge_prefix`, `purge_host`, or `purge_all`)
+- `Targets`: List of URLs / directories / domains to purge
 
-**后续操作**：告知用户任务已提交并提供 JobId。若需确认执行结果，转至 [场景 D](#场景-d查询任务进度)。
+**Follow-up**: Inform user that the task has been submitted and provide JobId. If confirmation of execution result is needed, go to [Scenario D](#scenario-d-query-task-progress).
 
-## 场景 C：URL 预热
+## Scenario C: URL Prefetch
 
-**触发**：用户说"预热 URL"、"提前缓存"、"prefetch"、"预加载资源"。
+**Trigger**: User says "prefetch URL", "prefetch cache", "prefetch", "preload resources".
 
-> **前置步骤**：
-> 1. 完成 [场景 0：选择站点](#场景-0选择站点)，确认要操作的站点
-> 2. 调用 DescribeContentQuota（场景 A）展示 `prefetch_url` 配额剩余量
-> 3.（可选）调用 DescribePrefetchOriginLimit 查询目标域名的回源限速限制
+> **Prerequisites**:
+> 1. Complete [Scenario 0: Select Site](#scenario-0-select-site) to confirm the site to operate on
+> 2. Call DescribeContentQuota (Scenario A) to display remaining `prefetch_url` quota
+> 3. (Optional) Call DescribePrefetchOriginLimit to query origin rate limit for the target domain
 
-URL 预热会主动将资源从源站拉取到边缘节点缓存，适合大促、发版前提前预热热点资源。
+URL prefetch actively fetches resources from origin to edge node cache, suitable for preloading hot resources before major promotions or version releases.
 
-### C1：URL 格式检查
+### C1: URL Format Check
 
-在执行预热前，**必须**检查 URL 格式是否符合要求：
+Before executing prefetch, **must** check if URL format meets requirements:
 
-**✅ 支持的 URL 格式**：
-- 完整的 HTTP/HTTPS URL：`https://example.com/path/to/file.jpg`
-- 带查询参数的 URL：`https://example.com/api/data?id=123&type=json`
-- 特定文件路径：`https://cdn.example.com/images/banner.png`
+**✅ Supported URL Formats**:
+- Complete HTTP/HTTPS URL: `https://example.com/path/to/file.jpg`
+- URL with query parameters: `https://example.com/api/data?id=123&type=json`
+- Specific file path: `https://cdn.example.com/images/banner.png`
 
-**❌ 不支持的 URL 格式**：
-- ⚠️ **带通配符的 URL**：`https://example.com/path/*` 或 `https://example.com/*.jpg`
-- 目录路径：`https://example.com/path/` （目录预热请使用多个具体文件 URL）
-- 不完整的 URL：`example.com/path` （缺少协议）
+**❌ Unsupported URL Formats**:
+- ⚠️ **URLs with wildcards**: `https://example.com/path/*` or `https://example.com/*.jpg`
+- Directory paths: `https://example.com/path/` (for directory prefetch, use multiple specific file URLs)
+- Incomplete URLs: `example.com/path` (missing protocol)
 
-**检查规则**：
-1. URL 必须以 `http://` 或 `https://` 开头
-2. URL 中不能包含通配符 `*` 或 `?`（查询参数中的 `?` 除外）
-3. 建议每个 URL 指向具体的文件资源
+**Check Rules**:
+1. URL must start with `http://` or `https://`
+2. URL cannot contain wildcards `*` or `?` (except `?` in query parameters)
+3. It's recommended that each URL points to a specific file resource
 
-**处理流程**：
+**Processing Flow**:
 ```
-遍历用户提供的 URL 列表
-  ├─ 检查是否包含通配符 (* ?)
-  │  ├─ 包含 → 提示用户："预热不支持通配符 URL，请提供具体的文件 URL"
-  │  └─ 不包含 → 继续
-  ├─ 检查协议
-  │  ├─ 缺少 http/https → 提示用户补充协议
-  │  └─ 有协议 → 继续
-  └─ 加入有效 URL 列表
+Iterate through user-provided URL list
+  ├─ Check if contains wildcards (* ?)
+  │  ├─ Contains → Prompt user: "Prefetch doesn't support wildcard URLs, please provide specific file URLs"
+  │  └─ Doesn't contain → Continue
+  ├─ Check protocol
+  │  ├─ Missing http/https → Prompt user to add protocol
+  │  └─ Has protocol → Continue
+  └─ Add to valid URL list
 ```
 
-> **重要提示**：
-> - 预热仅支持 URL 粒度，不支持目录或域名级别
-> - 若需预热整个目录，需提供该目录下所有文件的完整 URL 列表
-> - 通配符刷新仅在缓存刷新场景中部分支持（如目录刷新），预热场景不支持
+> **Important Notes**:
+> - Prefetch only supports URL granularity, not directory or domain level
+> - To prefetch an entire directory, you need to provide a complete URL list of all files under that directory
+> - Wildcard purge is partially supported in cache purge scenarios (such as directory purge), but not supported in prefetch scenarios
 
-### C2：执行预热
+### C2: Execute Prefetch
 
-**调用** `CreatePrefetchTask`，传入参数：
-- `ZoneId`：站点 ID（来自场景 0）
-- `Targets`：要预热的 URL 列表（已通过格式检查）
+**Call** `CreatePrefetchTask`, passing parameters:
+- `ZoneId`: Site ID (from Scenario 0)
+- `Targets`: List of URLs to prefetch (passed format check)
 
-**后续操作**：告知用户任务已提交并提供 JobId。若需确认执行结果，转至 [场景 D](#场景-d查询任务进度)。
+**Follow-up**: Inform user that the task has been submitted and provide JobId. If confirmation of execution result is needed, go to [Scenario D](#scenario-d-query-task-progress).
 
-### C3：查询预热回源限速限制（DescribePrefetchOriginLimit）
+### C3: Query Prefetch Origin Rate Limit (DescribePrefetchOriginLimit)
 
-> 此接口为白名单内测功能，仅在用户提到"预热限速"时使用。
+> This interface is a whitelist beta feature, only use when user mentions "prefetch rate limit".
 
-调用 `DescribePrefetchOriginLimit`。
+Call `DescribePrefetchOriginLimit`.
 
-**输出建议**：若域名有限速配置，在预热前提醒用户当前带宽上限，大批量预热可能受此限制影响。
+**Output suggestion**: If the domain has rate limit configuration, remind the user of the current bandwidth limit before prefetching; large-scale prefetch may be affected by this limit.
 
-## 场景 D：查询任务进度
+## Scenario D: Query Task Progress
 
-**触发**：用户说"刷新完了吗"、"查看任务进度"、"预热状态"。
+**Trigger**: User says "is purge done", "check task progress", "prefetch status".
 
-### D1：查询刷新任务
+### D1: Query Purge Tasks
 
-调用 `DescribePurgeTasks`。
+Call `DescribePurgeTasks`.
 
-### D2：查询预热任务
+### D2: Query Prefetch Tasks
 
-调用 `DescribePrefetchTasks`，参数和 Filters 与刷新任务类似。
+Call `DescribePrefetchTasks`, parameters and Filters similar to purge tasks.
 
-**输出建议**：以表格展示任务列表，标注 `failed` 和 `timeout` 的任务。若有失败任务，建议用户检查 URL 是否正确或稍后重试。
+**Output suggestion**: Display task list in a table, marking tasks with `failed` and `timeout` status. If there are failed tasks, suggest users to check if URLs are correct or retry later.
 
-> 预热任务额外有 `invalid` 状态，表示源站响应非 2xx，需检查源站服务。
+> Prefetch tasks additionally have `invalid` status, indicating origin response is non-2xx; need to check origin service.
 
-### D3：提交后自动轮询进度
+### D3: Auto-poll Progress After Submission
 
-提交刷新 / 预热任务后，应主动轮询任务状态直到终态：
+After submitting purge / prefetch tasks, should actively poll task status until terminal state:
 
-1. 提交任务后获取 `JobId`
-2. 等待 5-10 秒后查询状态
-3. 若仍在 `processing`，继续等待并重试（建议间隔 10 秒）
-4. 若到达终态（`success` / `failed` / `timeout` / `canceled`），汇总结果展示给用户
+1. Get `JobId` after submitting task
+2. Wait 5-10 seconds before querying status
+3. If still `processing`, continue waiting and retry (suggest 10-second interval)
+4. If reaching terminal state (`success` / `failed` / `timeout` / `canceled`), summarize results and display to user
 
-> 通常 URL 刷新 1-2 分钟完成，目录 / Host 刷新 3-5 分钟，预热时间取决于资源大小和数量。
+> Usually URL purge completes in 1-2 minutes, directory / Host purge in 3-5 minutes; prefetch time depends on resource size and quantity.
 
-## 场景 E：批量 URL 输入
+## Scenario E: Batch URL Input
 
-**触发**：用户提供大量 URL 列表（从文件读取或直接粘贴多行）。
+**Trigger**: User provides a large number of URLs (read from file or directly paste multiple lines).
 
-### E1：从用户粘贴的文本提取 URL
+### E1: Extract URLs from User's Pasted Text
 
-当用户粘贴多行 URL 时：
-1. 按行分割文本，每行一个 URL
-2. 过滤掉空行和注释行（以 `#` 开头）
-3. 确保每个 URL 以 `http://` 或 `https://` 开头
-4. 汇总有效 URL 数量，展示给用户确认
+When user pastes multiple lines of URLs:
+1. Split text by lines, one URL per line
+2. Filter out empty lines and comment lines (starting with `#`)
+3. Ensure each URL starts with `http://` or `https://`
+4. Summarize valid URL count and display to user for confirmation
 
-### E2：从文件读取 URL 列表
+### E2: Read URL List from File
 
-当用户说"从文件导入"、"读取 URL 列表文件"：
-1. 读取用户指定的文件（支持 `.txt`、`.csv` 等纯文本格式）
-2. 按行解析，过滤空行和注释
-3. 展示解析出的 URL 数量和前几条样例，请用户确认
+When user says "import from file", "read URL list file":
+1. Read user-specified file (support `.txt`, `.csv` and other plain text formats)
+2. Parse by lines, filter empty lines and comments
+3. Display parsed URL count and first few samples, ask user to confirm
 
-### E3：批量提交注意事项
+### E3: Batch Submission Considerations
 
-- **检查配额**：先查 DescribeContentQuota，确保剩余配额 ≥ URL 数量
-- **单次上限**：每次提交的 URL 数量受单次批量上限限制，超过上限时自动分批提交
-- **URL 去重**：提交前去重，避免浪费配额
-- **结果汇总**：所有批次提交完成后，汇总 JobId 列表和失败项，统一查询进度
+- **Check Quota**: First query DescribeContentQuota to ensure remaining quota ≥ URL count
+- **Single Batch Limit**: Number of URLs submitted each time is subject to single batch upper limit; automatically submit in batches when exceeding limit
+- **URL Deduplication**: Deduplicate before submission to avoid wasting quota
+- **Result Summary**: After all batches are submitted, summarize JobId list and failed items, query progress uniformly

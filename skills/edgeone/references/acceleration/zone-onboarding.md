@@ -1,397 +1,397 @@
-# 站点一键接入向导
+# Site One-Click Onboarding Guide
 
-端到端完成域名接入 EdgeOne：确认套餐 → 创建站点 → 验证归属权 → 添加加速域名 → 申请并部署证书。
+End-to-end domain onboarding to EdgeOne: confirm plan → create site → verify ownership → add acceleration domain → apply and deploy certificate.
 
-## 重要概念
+## Important Concepts
 
-### 同名站点标识符 (AliasZoneName)
+### Alias Zone Name (AliasZoneName)
 
-当您创建两个及以上相同站点名称的站点时，需要使用**同名站点标识符**进行区分。
+When you create two or more sites with the same site name, you need to use an **Alias Zone Name** to distinguish them.
 
-**使用场景**：
-- 同一个域名使用不同接入模式（CNAME 接入、DNSPod 托管接入）
-- 同一个域名配置不同的加速策略或安全策略
+**Use Cases**:
+- Same domain using different access modes (CNAME access, DNSPod hosting access)
+- Same domain configured with different acceleration or security strategies
 
-**格式要求**：
-- 允许输入数字、英文字母、`.`、`-` 和 `_` 的组合
-- 长度限制：200 个字符以内
-- 示例：`site-prod`、`site-test`、`site_backup`
+**Format Requirements**:
+- Allows combination of numbers, English letters, `.`, `-`, and `_`
+- Length limit: within 200 characters
+- Examples: `site-prod`, `site-test`, `site_backup`
 
-**接入模式限制**：
-- ✅ **CNAME 接入**：支持创建多个同名站点
-- ✅ **DNSPod 托管接入**：支持创建多个同名站点
-- ❌ **NS 接入**：一个域名仅可通过 NS 接入一次，不支持同名站点
-- ⚠️ **互斥规则**：已通过 NS 接入的域名，不能再使用其他接入模式；已通过 CNAME/DNSPod 托管接入的域名，不能再使用 NS 接入
+**Access Mode Restrictions**:
+- ✅ **CNAME Access**: Supports creating multiple sites with same name
+- ✅ **DNSPod Hosting Access**: Supports creating multiple sites with same name
+- ❌ **NS Access**: A domain can only be accessed via NS once, does not support sites with same name
+- ⚠️ **Mutual Exclusion Rule**: Domains accessed via NS cannot use other access modes; domains accessed via CNAME/DNSPod hosting cannot use NS access
 
-## 接入模式说明
+## Access Mode Description
 
-EdgeOne 支持四种站点接入模式：
+EdgeOne supports four site access modes:
 
-### 有域名接入模式
+### Access Modes with Domain
 
-1. **DNSPod 托管接入** (dnspodAccess)
-   - **前提条件**：域名已在 DNSPod 托管且状态正常
-   - **优势**：EdgeOne 可直接，自动完成归属权验证和配置，体验最佳
-   - **推荐度**：若满足条件，强烈推荐优先使用
-   - **可用功能**：七层加速、四层代理、安全防护、边缘函数
+1. **DNSPod Hosting Access** (dnspodAccess)
+   - **Prerequisites**: Domain is hosted in DNSPod and status is normal
+   - **Advantages**: EdgeOne can directly and automatically complete ownership verification and configuration, best experience
+   - **Recommendation**: Strongly recommended if conditions are met
+   - **Available Features**: Layer 7 acceleration, Layer 4 proxy, security protection, edge functions
 
-2. **NS 接入** (full)
-   - **要求**：需要在域名注册商处将 NS 记录切换到 EdgeOne 提供的 Name Servers
-   - **特点**：EdgeOne 完全接管域名 DNS 解析
-   - **可用功能**：七层加速、四层代理、安全防护、边缘函数、DNS 解析
+2. **NS Access** (full)
+   - **Requirements**: Need to switch NS records to EdgeOne-provided Name Servers at domain registrar
+   - **Characteristics**: EdgeOne fully takes over domain DNS resolution
+   - **Available Features**: Layer 7 acceleration, Layer 4 proxy, security protection, edge functions, DNS resolution
 
-3. **CNAME 接入** (partial)
-   - **要求**：需要手动添加 TXT 记录验证归属权
-   - **特点**：仅需配置 CNAME 记录指向 EdgeOne，不改变 NS 记录
-   - **可用功能**：七层加速、四层代理、安全防护、边缘函数
+3. **CNAME Access** (partial)
+   - **Requirements**: Need to manually add TXT record to verify ownership
+   - **Characteristics**: Only need to configure CNAME record pointing to EdgeOne, NS record unchanged
+   - **Available Features**: Layer 7 acceleration, Layer 4 proxy, security protection, edge functions
 
-### 无域名接入模式
+### Access Mode without Domain
 
-4. **无域名接入** (noDomainAccess)
-   - **适用场景**：暂时没有域名，或仅需使用四层代理和边缘函数功能
-   - **特点**：
-     - 无需提供域名即可创建站点
-     - 无需进行归属权验证
-     - 创建后可直接使用四层代理和边缘函数
-   - **可用功能**：仅支持四层代理、边缘函数
-   - **后续扩展**：站点创建后，可随时添加七层加速域名
+4. **No Domain Access** (noDomainAccess)
+   - **Applicable Scenarios**: Temporarily no domain, or only need Layer 4 proxy and edge functions
+   - **Characteristics**:
+     - Can create site without providing domain
+     - No ownership verification needed
+     - Can directly use Layer 4 proxy and edge functions after creation
+   - **Available Features**: Only supports Layer 4 proxy, edge functions
+   - **Future Extension**: After site creation, can add Layer 7 acceleration domains anytime
 
-## 端到端流程总览
+## End-to-End Process Overview
 
-### 有域名接入流程
-
-```
-1. 确认套餐（DescribePlans / DescribeAvailablePlans / CreatePlan）
-       ↓
-2. 创建站点（CreateZone）
-   ├─ B0：判断域名是否符合规范
-   │  ├─ 符合 → 继续有域名接入流程
-   │  └─ 不符合 → 提示使用无域名接入
-   ├─ B1：检测 DNSPod 托管状态（DescribeDomain）
-   │  ├─ 满足条件：优先推荐 DNSPod 托管接入
-   │  └─ 不满足：提供 CNAME 接入和 NS 接入
-   ├─ B1.5：域名冲突预检查（CreateZone DryRun）
-   │  ├─ 无冲突 → 继续创建
-   │  ├─ CNAME/DNSPod 冲突 → 要求提供 AliasZoneName
-   │  └─ NS 冲突 → 终止创建（NS 接入独占）
-   ├─ B2：确认接入模式和参数
-   │  ├─ 选择接入模式（DNSPod 托管 / NS / CNAME）
-   │  ├─ 选择加速区域（mainland/global 需要 ICP 备案）
-   │  └─ 若有冲突，提供同名站点标识符
-   ├─ DNSPod 托管接入：自动完成验证，直接跳转到步骤 4
-   ├─ NS 接入：切换 DNS 服务器
-   └─ CNAME 接入：添加 TXT 记录或文件验证
-       ↓
-3. 验证归属权（VerifyOwnership）—— 可跳过，后续再验证
-       ↓
-4. 添加加速域名（CreateAccelerationDomain）
-       ↓
-5. 申请并部署 HTTPS 证书（详见 cert-manager.md）
-       ↓
-   完成接入
-```
-
-### 无域名接入流程
+### Access Process with Domain
 
 ```
-1. 确认套餐（DescribePlans / DescribeAvailablePlans / CreatePlan）
+1. Confirm Plan (DescribePlans / DescribeAvailablePlans / CreatePlan)
        ↓
-2. 创建站点（CreateZone，Type = noDomainAccess）
-   - ZoneName 保持为空
-   - Area 保持为空
-   - 无需验证归属权
+2. Create Site (CreateZone)
+   ├─ B0: Determine if domain meets specifications
+   │  ├─ Meets → Continue with domain access process
+   │  └─ Doesn't meet → Prompt to use no-domain access
+   ├─ B1: Detect DNSPod hosting status (DescribeDomain)
+   │  ├─ Meets conditions: Prioritize recommending DNSPod hosting access
+   │  └─ Doesn't meet: Provide CNAME access and NS access
+   ├─ B1.5: Domain conflict pre-check (CreateZone DryRun)
+   │  ├─ No conflict → Continue creation
+   │  ├─ CNAME/DNSPod conflict → Require AliasZoneName
+   │  └─ NS conflict → Terminate creation (NS access is exclusive)
+   ├─ B2: Confirm access mode and parameters
+   │  ├─ Select access mode (DNSPod hosting / NS / CNAME)
+   │  ├─ Select acceleration area (mainland/global requires ICP filing)
+   │  └─ If conflict exists, provide Alias Zone Name
+   ├─ DNSPod hosting access: Automatically complete validation, jump directly to step 4
+   ├─ NS access: Switch DNS server
+   └─ CNAME access: Add TXT record or file validation
        ↓
-3. 配置四层代理或边缘函数
+3. Verify Ownership (VerifyOwnership) — Can be skipped, verify later
        ↓
-   完成接入
+4. Add Acceleration Domain (CreateAccelerationDomain)
+       ↓
+5. Apply and Deploy HTTPS Certificate (see cert-manager.md)
+       ↓
+   Onboarding Complete
 ```
 
-> 可随时通过 DescribeIdentifications 查询验证状态。
-> 证书相关查询与操作参考 [cert-manager.md](cert-manager.md)。
+### No Domain Access Process
 
-## 场景 A：确认套餐
+```
+1. Confirm Plan (DescribePlans / DescribeAvailablePlans / CreatePlan)
+       ↓
+2. Create Site (CreateZone, Type = noDomainAccess)
+   - Keep ZoneName empty
+   - Keep Area empty
+   - No ownership verification needed
+       ↓
+3. Configure Layer 4 proxy or edge functions
+       ↓
+   Onboarding Complete
+```
 
-**触发**：流程开始的第一步，在创建站点前必须先确认套餐。
+> Can check verification status anytime via DescribeIdentifications.
+> For certificate-related queries and operations, refer to [cert-manager.md](cert-manager.md).
 
-### A1：查询已有套餐（DescribePlans）
+## Scenario A: Confirm Plan
 
-调用 `DescribePlans` 查询账号下的套餐列表。
+**Trigger**: First step of the process, must confirm plan before creating site.
 
-#### 筛选逻辑
+### A1: Query Existing Plans (DescribePlans)
 
-从返回的套餐列表中，按以下条件过滤出可用套餐：
+Call `DescribePlans` to query plans under the account.
 
-1. **可绑定**：`Bindable == "true"`
-2. **状态正常**：`Status == "normal"`
-3. **配额充足**：已绑定站点数 < 站点配额上限
+#### Filter Logic
 
-> 只有同时满足以上 3 个条件的套餐才能用于绑定。
+From returned plan list, filter available plans by the following conditions:
 
-#### 有可用套餐
+1. **Bindable**: `Bindable == "true"`
+2. **Normal Status**: `Status == "normal"`
+3. **Sufficient Quota**: Bound sites < Site quota limit
 
-> **禁止自动绑定**：绑定套餐会消耗站点配额，**必须**先向用户展示套餐信息并等待用户明确选择后才能执行绑定，绝不可自行决定。
+> Only plans meeting all 3 conditions above can be used for binding.
 
-**必须展示所有可用套餐**供用户选择，不得遗漏或截断：
+#### Has Available Plans
 
-- 若 **仅 1 个套餐**：仍需向用户确认后才能使用
-- 若 **多个套餐**：
-  - **展示信息**：套餐 ID、套餐类型、已绑定站点数
-  - **展示方式**：若套餐数量超过结构化交互工具的选项上限，应分批展示或提供输入方式，确保用户能看到并选择所有套餐
-  - **建议排序**：按已绑定站点数从少到多排序，方便用户选择配额充足的套餐
-- 用户也可以选择 **不绑定已有套餐**，转到 A2 购买新套餐
+> **No Automatic Binding**: Binding plan will consume site quota. **Must** first display plan information to user and wait for explicit selection before binding; never decide on your own.
 
-#### 无可用套餐
+**Must display all available plans** for user selection, no omissions or truncation:
 
-转到 A2。
+- If **Only 1 plan**: Still need user confirmation before use
+- If **Multiple plans**:
+  - **Display Info**: Plan ID, plan type, bound site count
+  - **Display Method**: If plan count exceeds structured interaction tool's option limit, display in batches or provide input method to ensure user can see and select all plans
+  - **Suggested Sorting**: Sort by bound site count from least to most, convenient for user to select plans with sufficient quota
+- User can also choose **not to bind existing plan**, go to A2 to purchase new plan
 
-### A2：购买新套餐（DescribeAvailablePlans → CreatePlan）
+#### No Available Plans
 
-调用 `DescribeAvailablePlans` 查询当前账户可购买的套餐类型，向用户展示可选方案。
+Go to A2.
 
-> **禁止自动购买**：购买套餐将产生实际费用，**必须**向用户展示套餐类型、价格信息，并等待用户明确确认后才能调用 `CreatePlan`。绝不可跳过确认或自行决定购买。
+### A2: Purchase New Plan (DescribeAvailablePlans → CreatePlan)
 
-用户明确确认后，调用 `CreatePlan` 购买套餐。
+Call `DescribeAvailablePlans` to query plan types available for purchase under current account, display options to user.
 
-若用户确认不购买，提醒：**站点需绑定套餐后才能正常提供服务**，未绑定套餐的站点将处于 `init` 状态无法生效。
+> **No Automatic Purchase**: Purchasing plan will incur actual charges. **Must** display plan type and pricing info to user, and wait for explicit confirmation before calling `CreatePlan`. Never skip confirmation or decide on your own.
 
-### 下一步
+After user explicit confirmation, call `CreatePlan` to purchase plan.
 
-套餐确认完成后，携带 PlanId 进入 [场景 B：创建站点](#场景-b创建站点)。
+If user confirms not to purchase, remind: **Site needs to be bound to plan to provide normal service**. Sites not bound to plan will be in `init` status and unable to take effect.
 
-## 场景 B：创建站点
+### Next Step
 
-**触发**：用户说"把 example.com 接入 EdgeOne"、"创建站点"、"新建站点"，或套餐确认完成后的后续步骤。
+After plan confirmation, carry PlanId to [Scenario B: Create Site](#scenario-b-create-site).
 
-> 若用户直接触发本场景（未经过场景 A），须先引导完成 [场景 A：确认套餐](#场景-a确认套餐) 再继续。
+## Scenario B: Create Site
 
-> **禁止自动创建**：创建站点会消耗套餐的站点配额，**必须**向用户确认站点域名、接入模式、加速区域后才能执行，绝不可自行决定。
+**Trigger**: User says "onboard example.com to EdgeOne", "create site", "create new site", or subsequent step after plan confirmation.
 
-### B0：判断接入模式类型
+> If user directly triggers this scenario (without going through Scenario A), must first guide through [Scenario A: Confirm Plan](#scenario-a-confirm-plan) before continuing.
 
-**首先判断用户提供的站点名称是否符合域名规范**：
+> **No Automatic Creation**: Creating site will consume plan's site quota. **Must** confirm site domain, access mode, and acceleration area with user before execution; never decide on your own.
 
-1. **符合域名规范**（如 `example.com`、`test.com.cn`）：
-   - 进入有域名接入流程 → 转至 [B1：检测 DNSPod 托管状态](#b1检测-dnspod-托管状态)
+### B0: Determine Access Mode Type
 
-2. **不符合域名规范或用户明确表示没有域名**：
-   - 提示用户："您提供的站点名称不符合域名规范，EdgeOne 支持无域名接入模式，该模式仅限使用四层代理和边缘函数功能，后续可以添加七层加速域名。是否使用无域名接入模式？"
-   - 若用户确认 → 转至 [B3：无域名接入](#b3无域名接入)
-   - 若用户拒绝 → 提示用户提供有效的二级域名
+**First determine if the site name provided by user meets domain specifications**:
 
-> **域名规范**：有效的二级域名（如 example.com），不接受三级及以上域名（如 www.example.com）作为站点名称。
+1. **Meets domain specifications** (e.g., `example.com`, `test.com.cn`):
+   - Enter access process with domain → Go to [B1: Detect DNSPod Hosting Status](#b1-detect-dnspod-hosting-status)
 
-### B1：检测 DNSPod 托管状态
+2. **Doesn't meet domain specifications or user explicitly indicates no domain**:
+   - Prompt user: "The site name you provided doesn't meet domain specifications. EdgeOne supports no-domain access mode, which is limited to Layer 4 proxy and edge functions, and Layer 7 acceleration domains can be added later. Do you want to use no-domain access mode?"
+   - If user confirms → Go to [B3: No Domain Access](#b3-no-domain-access)
+   - If user declines → Prompt user to provide valid second-level domain
 
-在向用户展示接入模式选项前，先尝试检测域名是否在 DNSPod 托管，以便优先推荐 DNSPod 托管接入模式。
+> **Domain Specifications**: Valid second-level domain (e.g., example.com), does not accept third-level and above domains (e.g., www.example.com) as site name.
 
-**步骤：**
+### B1: Detect DNSPod Hosting Status
 
-1. **调用 DNSPod 的 DescribeDomain 接口**，传入要接入的域名
+Before displaying access mode options to user, first try to detect if domain is hosted in DNSPod to prioritize recommending DNSPod hosting access mode.
+
+**Steps:**
+
+1. **Call DNSPod's DescribeDomain interface**, pass in the domain to onboard
    
-2. **判断是否满足 DNSPod 托管接入条件**：
-   - 域名存在于 DNSPod 中
-   - `Status` 字段为 `ENABLE` 或 `LOCK`
-   - `DnsStatus` 字段为空字符串 (正常状态)
+2. **Determine if DNSPod hosting access conditions are met**:
+   - Domain exists in DNSPod
+   - `Status` field is `ENABLE` or `LOCK`
+   - `DnsStatus` field is empty string (normal status)
 
-3. **异常处理**：
-   - 若接口调用失败（如无权限、服务不可用），静默处理，不展示 DNSPod 托管接入选项
-   - 若域名不存在或状态不满足条件，不展示 DNSPod 托管接入选项
+3. **Exception Handling**:
+   - If interface call fails (e.g., no permission, service unavailable), handle silently, don't display DNSPod hosting access option
+   - If domain doesn't exist or status doesn't meet conditions, don't display DNSPod hosting access option
 
-> **注意**：`DescribeDomain` 接口只会返回无权限或查询不到域名的错误，不会返回服务授权相关的错误码。
+> **Note**: The `DescribeDomain` interface only returns errors for no permission or domain not found, won't return service authorization related error codes.
 
-### B1.5：域名冲突预检查
+### B1.5: Domain Conflict Pre-check
 
-在正式创建站点前，先进行预检查，判断域名是否已被接入，避免因域名冲突导致创建失败。
+Before formally creating site, perform pre-check to determine if domain has been accessed to avoid creation failure due to domain conflict.
 
-**步骤：**
+**Steps:**
 
-1. **调用 CreateZone 接口进行预检查**
-   - 传入参数 `DryRun: true`
-   - 传入用户要接入的域名 `ZoneName`
-   - 传入用户选择的接入模式 `Type`
+1. **Call CreateZone interface for pre-check**
+   - Pass parameter `DryRun: true`
+   - Pass domain to onboard `ZoneName`
+   - Pass user-selected access mode `Type`
 
-2. **判断预检查结果**：
+2. **Determine pre-check result**:
 
-   **a) 预检查成功**（无错误返回）
-   - 说明域名未被接入，可以直接创建
-   - 进入 [B2：确认接入模式和参数](#b2确认接入模式和参数)
+   **a) Pre-check succeeds** (no error returned)
+   - Indicates domain hasn't been accessed, can directly create
+   - Go to [B2: Confirm Access Mode and Parameters](#b2-confirm-access-mode-and-parameters)
 
-   **b) 返回 `ResourceInUse.Zone` 错误**
-   - 说明域名已被 CNAME 或 DNSPod 托管接入
-   - 提示用户："该域名已被接入，需要设置同名站点标识符以区分不同站点"
-   - 引导用户提供 `AliasZoneName`（同名站点标识符）
-   - 进入 [B2：确认接入模式和参数](#b2确认接入模式和参数)
+   **b) Returns `ResourceInUse.Zone` error**
+   - Indicates domain has been accessed via CNAME or DNSPod hosting
+   - Prompt user: "This domain has been accessed, need to set Alias Zone Name to distinguish different sites"
+   - Guide user to provide `AliasZoneName` (Alias Zone Name)
+   - Go to [B2: Confirm Access Mode and Parameters](#b2-confirm-access-mode-and-parameters)
 
-   **c) 返回 `ResourceInUse.Others` 或 `ResourceInUse.OthersNS` 错误**
-   - 说明域名已通过 **NS 接入**
-   - 提示用户："该域名已通过 NS 接入方式接入，NS 接入的站点仅可接入一个且不允许再使用其他接入方式。如需使用其他接入方式，请先删除已有的 NS 接入站点。"
-   - **终止创建流程**
+   **c) Returns `ResourceInUse.Others` or `ResourceInUse.OthersNS` error**
+   - Indicates domain has been accessed via **NS access**
+   - Prompt user: "This domain has been accessed via NS access. NS access sites can only be accessed once and cannot use other access modes. If you want to use other access modes, please delete the existing NS access site first."
+   - **Terminate creation process**
 
-> **重要说明**：
-> - NS 接入具有独占性，一个域名只能通过 NS 接入一次
-> - 已通过 NS 接入的域名，无法再使用 CNAME 或 DNSPod 托管接入
-> - 已通过 CNAME 或 DNSPod 托管接入的域名，无法再使用 NS 接入（但可以继续使用 CNAME 或 DNSPod 托管接入创建同名站点）
+> **Important Notes**:
+> - NS access has exclusivity; a domain can only be accessed via NS once
+> - Domains accessed via NS cannot use CNAME or DNSPod hosting access
+> - Domains accessed via CNAME or DNSPod hosting cannot use NS access (but can continue using CNAME or DNSPod hosting to create sites with same name)
 
-### B2：确认接入模式和参数
+### B2: Confirm Access Mode and Parameters
 
-**调用** `CreateZone`。用户需提供：
-- **站点域名**：要接入的根域名
-- **接入模式**：根据 B1 的检测结果展示可用选项
-  - 若满足 DNSPod 托管条件：**优先推荐** DNSPod 托管接入 (dnspod)，同时提供 CNAME 接入 (partial) 和 NS 接入 (full) 选项
-  - 若不满足条件：仅提供 CNAME 接入 (partial) 和 NS 接入 (full) 选项
-- **加速区域** (Area)：可选值为 mainland (中国大陆)、overseas (全球不含中国大陆)、global (全球)
-  - **mainland (中国大陆)**：⚠️ **要求域名已在工信部完成 ICP 备案**
-  - **global (全球)**：⚠️ **要求域名已在工信部完成 ICP 备案**
-  - **overseas (全球不含中国大陆)**：无备案要求
-- **同名站点标识符** (AliasZoneName)：**仅在 B1.5 预检查返回域名冲突时需要**
-  - 由用户提供，用于区分同名站点
-  - 格式要求：数字、英文字母、`.`、`-`、`_` 组合，200 字符以内
+**Call** `CreateZone`. User needs to provide:
+- **Site Domain**: Root domain to onboard
+- **Access Mode**: Display available options based on B1 detection results
+  - If DNSPod hosting conditions are met: **Prioritize recommending** DNSPod hosting access (dnspod), also provide CNAME access (partial) and NS access (full) options
+  - If conditions not met: Only provide CNAME access (partial) and NS access (full) options
+- **Acceleration Area** (Area): Optional values are mainland (Mainland China), overseas (Global excluding Mainland China), global (Global)
+  - **mainland (Mainland China)**: ⚠️ **Requires domain to have completed ICP filing with MIIT**
+  - **global (Global)**: ⚠️ **Requires domain to have completed ICP filing with MIIT**
+  - **overseas (Global excluding Mainland China)**: No filing requirement
+- **Alias Zone Name** (AliasZoneName): **Only needed when B1.5 pre-check returns domain conflict**
+  - Provided by user to distinguish sites with same name
+  - Format requirements: combination of numbers, English letters, `.`, `-`, `_`, within 200 characters
 
-> **重要提示**：
-> - 选择 `mainland` 或 `global` 区域时，必须提醒用户确认域名已完成 ICP 备案，否则站点将无法正常接入和使用。
-> - 若 B1.5 预检查发现域名冲突，必须要求用户提供 `AliasZoneName` 参数。
+> **Important Notes**:
+> - When selecting `mainland` or `global` area, must remind user to confirm domain has completed ICP filing, otherwise site will not be able to onboard and use normally.
+> - If B1.5 pre-check finds domain conflict, must require user to provide `AliasZoneName` parameter.
 
-建议创建时直接传入 PlanId。
+Suggest passing PlanId directly when creating.
 
-> 不传 PlanId 时站点处于 `init` 状态，需后续通过 BindZoneToPlan 绑定。
+> When not passing PlanId, site is in `init` status, need to bind later via BindZoneToPlan.
 >
-> **禁止自动绑定**：无论是通过 `CreateZone` 传入 PlanId 还是后续调用 `BindZoneToPlan`，都**必须**事先获得用户明确确认，绝不可自行决定绑定哪个套餐。
+> **No Automatic Binding**: Whether passing PlanId via `CreateZone` or later calling `BindZoneToPlan`, **must** obtain user's explicit confirmation beforehand; never decide on your own which plan to bind.
 
-#### 异常处理：服务授权缺失
+#### Exception Handling: Service Authorization Missing
 
-**仅当用户选择 DNSPod 托管接入模式时**，调用 `CreateZone` 可能返回错误码 `OperationDenied.DNSPodUnauthorizedRoleOperation`，说明缺少服务授权。
+**Only when user selects DNSPod hosting access mode**, calling `CreateZone` may return error code `OperationDenied.DNSPodUnauthorizedRoleOperation`, indicating service authorization is missing.
 
-**处理步骤**：
+**Handling Steps**:
 
-1. **自动创建服务授权**：调用 CAM 的 `CreateServiceLinkedRole` 接口
+1. **Automatically create service authorization**: Call CAM's `CreateServiceLinkedRole` interface
    - `QCSServiceName`: `["DnspodaccesEO.TEO.cloud.tencent.com"]`
-   - `Description`: `"当前角色为边缘安全加速平台(TEO)服务相关角色，该角色将在已关联策略的权限范围内查询您在DNSPod产品内已接入的域名状态以及相关解析记录，并在一键修改解析的场景下帮助您快速完成解析修改将加速服务切换至EO"`
+   - `Description`: `"This role is a service-linked role for Tencent EdgeOne Platform (TEO). This role will query your domain status and related DNS records in DNSPod within the permission scope of associated policies, and help you quickly complete DNS modification to switch acceleration service to EO in one-click DNS modification scenarios"`
 
-2. **重试创建站点**：
-   - 若服务授权创建成功，重新调用 `CreateZone` 创建站点
-   - 若服务授权创建失败，启用兜底模式：提示用户使用 NS 接入或 CNAME 接入
+2. **Retry site creation**:
+   - If service authorization creation succeeds, retry calling `CreateZone` to create site
+   - If service authorization creation fails, enable fallback mode: prompt user to use NS access or CNAME access
 
-### DNSPod 托管接入的下一步
+### Next Step for DNSPod Hosting Access
 
-> DNSPod 托管接入模式下,EdgeOne 将自动完成归属权验证。
+> In DNSPod hosting access mode, EdgeOne will automatically complete ownership verification.
 
-创建站点成功后：
-- 站点会自动完成归属权验证
-- 可直接进入 [场景 D：添加加速域名](#场景-d添加加速域名)
+After site creation succeeds:
+- Site will automatically complete ownership verification
+- Can directly go to [Scenario D: Add Acceleration Domain](#scenario-d-add-acceleration-domain)
 
-### NS 接入的下一步
+### Next Step for NS Access
 
-告知用户需要到域名注册商处将 DNS 服务器修改为响应中返回的 NameServers，然后转至 [场景 C：验证归属权](#场景-c验证归属权)。
+Inform user that they need to modify DNS server to NameServers returned in response at domain registrar, then go to [Scenario C: Verify Ownership](#scenario-c-verify-ownership).
 
-### CNAME 接入的下一步
+### Next Step for CNAME Access
 
-告知用户两种验证方式（任选其一），从响应中获取验证信息：
+Inform user of two validation methods (choose one), get validation info from response:
 
-1. **DNS 验证**：在 DNS 添加 TXT 记录
-2. **文件验证**：在源站根目录放置验证文件
+1. **DNS Validation**: Add TXT record in DNS
+2. **File Validation**: Place validation file in origin root directory
 
-等待用户确认配置完成后，转至 [场景 C：验证归属权](#场景-c验证归属权)。
+After user confirms configuration complete, go to [Scenario C: Verify Ownership](#scenario-c-verify-ownership).
 
-### B3：无域名接入
+### B3: No Domain Access
 
-**适用场景**：用户暂无域名或仅需使用四层代理和边缘函数功能。
+**Applicable Scenarios**: User temporarily has no domain or only needs Layer 4 proxy and edge functions.
 
-**调用** `CreateZone`，参数如下：
+**Call** `CreateZone`, parameters as follows:
 - `Type`: `noDomainAccess`
-- `ZoneName`: **保留为空字符串**
-- `Area`: **保留为空字符串**
-- `PlanId`: 传入已确认的套餐 ID
+- `ZoneName`: **Keep as empty string**
+- `Area`: **Keep as empty string**
+- `PlanId`: Pass confirmed plan ID
 
-> **重要提示**：无域名接入模式下，ZoneName 和 Area 参数必须保留为空，否则接口调用会失败。
+> **Important Note**: In no-domain access mode, ZoneName and Area parameters must be kept empty, otherwise interface call will fail.
 
-**创建成功后**：
-- 站点无需验证归属权
-- 可直接使用四层代理和边缘函数功能
-- 告知用户："站点已创建成功，您现在可以配置四层代理或边缘函数。如需使用七层加速功能，可随时添加加速域名。"
+**After creation succeeds**:
+- Site needs no ownership verification
+- Can directly use Layer 4 proxy and edge functions
+- Inform user: "Site created successfully, you can now configure Layer 4 proxy or edge functions. If you need Layer 7 acceleration features, you can add acceleration domains anytime."
 
-**后续操作**：
-- 配置四层代理：参考四层代理相关文档
-- 配置边缘函数：参考边缘函数相关文档
+**Follow-up Operations**:
+- Configure Layer 4 proxy: Refer to Layer 4 proxy related documentation
+- Configure edge functions: Refer to edge functions related documentation
 
-## 场景 C：验证归属权
+## Scenario C: Verify Ownership
 
-**触发**：用户说"验证站点"、"检查 DNS 切换"、"归属权验证"，或创建站点后的后续步骤。
+**Trigger**: User says "verify site", "check DNS switch", "ownership verification", or subsequent step after site creation.
 
-> 用户可以选择跳过归属权验证，直接进入 [场景 D：添加加速域名](#场景-d添加加速域名)，后续再回来验证。
+> User can choose to skip ownership verification and directly go to [Scenario D: Add Acceleration Domain](#scenario-d-add-acceleration-domain), verify later.
 
-### C1：查询验证状态（DescribeIdentifications）
+### C1: Query Verification Status (DescribeIdentifications)
 
-在触发验证前，先调用 `DescribeIdentifications` 查询当前验证状态。
+Before triggering verification, first call `DescribeIdentifications` to query current verification status.
 
-**决策**：
-- 若 `Status` 为 `finished`，无需再验证，直接进入下一步
-- 若 `Status` 为 `pending`，根据响应中的验证信息告知用户配置 DNS TXT 记录或文件验证
+**Decision**:
+- If `Status` is `finished`, no need to verify again, go directly to next step
+- If `Status` is `pending`, inform user to configure DNS TXT record or file validation based on validation info in response
 
-### C2：触发验证（VerifyOwnership）
+### C2: Trigger Verification (VerifyOwnership)
 
-等用户确认已完成 DNS / 文件配置后，调用 `VerifyOwnership`。
+After user confirms DNS / file configuration complete, call `VerifyOwnership`.
 
-**NS 接入场景**：验证 DNS 服务器是否已切换成功。DNS 切换通常需要 24-48 小时全球生效，如果验证失败，建议用户稍后重试。
+**NS Access Scenario**: Verify if DNS server switch succeeded. DNS switch usually takes 24-48 hours to take effect globally; if verification fails, suggest user retry later.
 
-**CNAME 接入场景**：验证 TXT 记录或文件是否正确配置。若站点通过归属权验证，后续添加域名无需再验证。
+**CNAME Access Scenario**: Verify if TXT record or file is configured correctly. If site passes ownership verification, adding domains later won't need verification again.
 
-## 场景 D：添加加速域名
+## Scenario D: Add Acceleration Domain
 
-**触发**：用户说"添加域名"、"配置加速域名"、"接入子域名"，或验证归属权完成（或跳过）后的后续步骤。
+**Trigger**: User says "add domain", "configure acceleration domain", "onboard subdomain", or subsequent step after ownership verification completion (or skip).
 
-> **无域名接入站点**：通过无域名接入模式创建的站点，也可以随时添加七层加速域名，添加后即可使用完整的七层加速功能。
+> **No-Domain Access Sites**: Sites created via no-domain access mode can also add Layer 7 acceleration domains anytime; after adding, can use complete Layer 7 acceleration features.
 
-### D1：采集参数
+### D1: Collect Parameters
 
-调用前需向用户确认以下信息：
+Need to confirm following information with user before calling:
 
-1. **加速域名**（DomainName）：要接入的子域名，如 `www.example.com`
-2. **IPv6 访问**（IPv6Status）：是否开启 IPv6 访问
-3. **源站配置**（OriginInfo），包括：
-   - **源站类型**（OriginType）
-   - **源站地址**（Origin）：根据源站类型填写 IP、域名、COS 桶域名、源站组 ID 等
-   - **回源 HOST**（OriginHost，可选）：**仅当源站类型为 IP 或域名时可配置**
-     - 用于指定回源请求的 Host 头
-     - 其他源站类型（如 COS、源站组等）不支持自定义回源 HOST
-   - 如需私有对象存储源站访问，确认 PrivateAccess 及鉴权参数
-4. **回源协议**（OriginProtocol，可选）：FOLLOW / HTTP / HTTPS
-5. **回源端口**（可选）：HTTP 回源端口 / HTTPS 回源端口
+1. **Acceleration Domain** (DomainName): Subdomain to onboard, e.g., `www.example.com`
+2. **IPv6 Access** (IPv6Status): Whether to enable IPv6 access
+3. **Origin Configuration** (OriginInfo), including:
+   - **Origin Type** (OriginType)
+   - **Origin Address** (Origin): Fill in IP, domain, COS bucket domain, origin group ID, etc., based on origin type
+   - **Origin Host** (OriginHost, optional): **Only configurable when origin type is IP or domain**
+     - Used to specify Host header of origin request
+     - Other origin types (such as COS, origin group, etc.) do not support custom origin HOST
+   - If private object storage origin access needed, confirm PrivateAccess and authentication parameters
+4. **Origin Protocol** (OriginProtocol, optional): FOLLOW / HTTP / HTTPS
+5. **Origin Port** (optional): HTTP origin port / HTTPS origin port
 
-> **回源 HOST 说明**：
-> - 回源 HOST 用于控制回源请求时的 Host 请求头
-> - 仅在源站类型为 `IP` 或 `域名` 时可配置
-> - 源站类型为 `对象存储`、`源站组`、`负载均衡` 等时，不提供该配置选项
+> **Origin Host Note**:
+> - Origin Host is used to control Host request header when fetching from origin
+> - Only configurable when origin type is `IP` or `domain`
+> - When origin type is `object storage`, `origin group`, `load balancer`, etc., this configuration option is not provided
 
-### D2：调用 CreateAccelerationDomain
+### D2: Call CreateAccelerationDomain
 
-> **禁止自动添加**：添加加速域名会变更线上 DNS 配置，**必须**在 D1 完成参数采集并获得用户明确确认后才能执行，绝不可自行决定。
+> **No Automatic Addition**: Adding acceleration domain will change online DNS configuration. **Must** complete parameter collection in D1 and obtain user's explicit confirmation before execution; never decide on your own.
 
-用户确认后调用 `CreateAccelerationDomain`。
+Call `CreateAccelerationDomain` after user confirmation.
 
-**下一步**：告知用户需要在 DNS 添加 CNAME 记录，将域名指向 EdgeOne 分配的 CNAME 地址（可通过 `DescribeAccelerationDomains` 查询 `Cname` 字段获取）。
+**Next Step**: Inform user that they need to add CNAME record in DNS, pointing domain to EdgeOne-assigned CNAME address (can query `Cname` field via `DescribeAccelerationDomains`).
 
-## 场景 E：申请并部署 HTTPS 证书
+## Scenario E: Apply and Deploy HTTPS Certificate
 
-**触发**：域名添加完成后，用户说"配置 HTTPS"、"申请证书"，或作为接入流程的最后一步。
+**Trigger**: After domain addition complete, user says "configure HTTPS", "apply for certificate", or as final step of onboarding process.
 
-> 证书的完整管理（CNAME 手动验证、部署自有证书、批量巡检等）参考 [cert-manager.md](cert-manager.md)。
+> Complete certificate management (CNAME manual validation, deploy custom certificate, batch inspection, etc.) refer to [cert-manager.md](cert-manager.md).
 
-### E1：NS 接入 / DNSPod 托管接入（自动验证，一步完成）
+### E1: NS Access / DNSPod Hosting Access (Automatic Validation, One-Step Complete)
 
-> **适用场景**：NS 接入模式或 DNSPod 托管接入模式下，EdgeOne 可以直接控制 DNS 记录，因此可以自动完成证书申请和部署。
+> **Applicable Scenarios**: In NS access mode or DNSPod hosting access mode, EdgeOne can directly control DNS records, so can automatically complete certificate application and deployment.
 
-> **禁止自动部署**：部署证书会直接影响域名的 HTTPS 服务，**必须**向用户说明将为哪些域名部署何种证书，并等待用户明确确认后才能调用 `ModifyHostsCertificate`。
+> **No Automatic Deployment**: Deploying certificate will directly affect domain's HTTPS service. **Must** inform user which domains will deploy which certificates, and wait for explicit confirmation before calling `ModifyHostsCertificate`.
 
-### E2：CNAME 接入（手动验证）
+### E2: CNAME Access (Manual Validation)
 
-CNAME 接入需要先申请证书、完成域名验证、再部署，流程较长。请参考 [cert-manager.md 场景 B2](cert-manager.md#b2cname-接入手动验证) 的完整步骤。
+CNAME access needs to first apply for certificate, complete domain validation, then deploy; process is longer. Please refer to [cert-manager.md Scenario B2](cert-manager.md#b2-cname-access-manual-validation) for complete steps.
 
-## 场景 F：查看接入状态
+## Scenario F: View Onboarding Status
 
-**触发**：用户说"查看站点状态"、"域名接入好了没"。
+**Trigger**: User says "check site status", "is domain onboarded".
 
-调用 `DescribeZones` 查询目标站点状态。
+Call `DescribeZones` to query target site status.
 
-> **重要**：查询站点列表时，应过滤掉 `Status` 为 `initializing` 的站点。这些站点正在初始化中，尚未完成创建，不应展示给用户。
+> **Important**: When querying site list, should filter out sites with `Status` as `initializing`. These sites are still initializing and haven't completed creation; should not be displayed to users.
 
-> 参考 [../api/zone-discovery.md](../api/zone-discovery.md) 获取更多查询方式。
+> Refer to [../api/zone-discovery.md](../api/zone-discovery.md) for more query methods.
