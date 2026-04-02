@@ -46,11 +46,35 @@ A comprehensive Skill for the Tencent Cloud EdgeOne (Edge Security & Acceleratio
 > This Skill uses the [Tencent Cloud CLI](https://cloud.tencent.com/document/product/440) to call Tencent Cloud APIs. The Tencent Cloud CLI must be installed before use — if it is not yet installed, the Agent will automatically install it after the Skill starts.
 
 **Included modules:**
-
-| Module | Description | Typical Triggers |
+ 
+| Module | Scenarios | Typical Triggers |
 |---|---|---|
-| **Site Acceleration** | Site onboarding, cache purge / prefetch, certificate management | "Onboard example.com to EO", "Purge cache", "Certificate is expiring" |
-| **Security Protection** | Security policy template audit, blocklist IP group query, security report | "Which domains have no security template?", "Generate a security report", "Check blocklist IP groups" |
+| **Acceleration** | <ul><li>Site onboarding wizard</li><li>Cache purge / prefetch</li><li>Certificate automation</li></ul> | <ul><li>"Onboard example.com to EO"</li><li>"Purge all cache under /static/"</li><li>"Certificate is expiring, help me renew"</li></ul> |
+| **Security** | <ul><li>Security report generation</li><li>Security template coverage audit</li><li>Domain blocklist IP group identification</li><li>Threat IP analysis & blocking</li></ul> | <ul><li>"Generate a security status report for this week"</li><li>"Which domains have no security template?"</li><li>"Check the blocklist IP groups for this domain"</li><li>"Analyze recent attack IPs and block them"</li></ul> |
+| **Observability** | <ul><li>Traffic trend daily report</li><li>Origin health check</li><li>Offline log download</li><li>Log parsing & fault analysis</li></ul> | <ul><li>"Generate yesterday's traffic report"</li><li>"Is the origin down?"</li><li>"Download logs for example.com from yesterday afternoon"</li><li>"Too many 502s, help me analyze the logs"</li></ul> |
+
+#### Skill File Structure
+
+The edgeone skill uses progressive disclosure — a multi-level index guides the Agent to read documents on demand:
+
+```
+edgeone/
+├── SKILL.md                              # edgeone skill entry point
+└── references/                           # skill reference docs
+    ├── api/                              # API calling module
+    │   ├── README.md                     # module entry
+    │   ├── install.md                    # scenario: tccli installation
+    │   └── ...
+    ├── acceleration/                     # site acceleration module
+    │   ├── README.md                     # module entry
+    │   ├── cache-purge.md               # scenario: cache purge / prefetch
+    │   └── ...
+    ├── security/                         # security protection module
+    │   ├── README.md                     # module entry
+    │   ├── security-report.md           # scenario: security report
+    │   └── ...
+    └── ...                               # other modules...
+```
 
 ## Security Design
 

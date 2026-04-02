@@ -45,12 +45,38 @@ git clone https://github.com/TencentEdgeOne/edgeone-agent-plugins.git
 
 > 本 Skill 通过 [腾讯云 CLI](https://cloud.tencent.com/document/product/440) 调用腾讯云 API 来实现相关能力。使用前需要安装腾讯云 CLI，如果您尚未安装，Agent 会在启动 Skill 后自动完成安装。
 
-**包含以下能力：**
+#### 能力一览
 
-| 模块 | 说明 | 典型触发场景 |
+edgeone **包含以下能力：**
+
+| 模块 | 场景 | 典型触发场景 |
 |---|---|---|
-| **站点加速** | 站点接入、缓存刷新 / 预热、证书管理 | 「帮我把 example.com 接入 EO」「刷新缓存」「证书快过期了」 |
-| **安全防护** | 安全策略模板盘查、黑名单 IP 组查询、安全周报 | 「哪些域名没绑安全模板」「出一份安全周报」「查黑名单 IP 组」 |
+| **站点加速** | <ul><li>站点接入向导</li><li>缓存刷新 / 预热</li><li>证书自动化管理</li></ul> | <ul><li>「帮我把 example.com 接入 EO」</li><li>「刷新 /static/ 下所有缓存」</li><li>「证书快过期了，帮我续期」</li></ul> |
+| **安全防护** | <ul><li>安全周报生成</li><li>安全模板覆盖度审计</li><li>域名黑名单 IP 组识别</li><li>威胁 IP 分析与封禁</li></ul> | <ul><li>「出一份本周安全状况报告」</li><li>「哪些域名没绑安全模板」</li><li>「查一下这个域名的黑名单 IP 组」</li><li>「分析最近的攻击 IP，帮我封禁」</li></ul> |
+| **可观测性** | <ul><li>流量趋势日报</li><li>回源健康检查</li><li>离线日志下载</li><li>日志解析与故障分析</li></ul> | <ul><li>「生成昨天的流量日报」</li><li>「回源是不是挂了」</li><li>「下载 example.com 昨天下午的日志」</li><li>「502 太多了，帮我分析一下日志」</li></ul> |
+
+#### Skill 文件结构
+
+edgeone 采用渐进式披露的思想，通过设计多级索引引导 Agent 按需读取文档，组织如下：
+
+```
+edgeone/
+├── SKILL.md                              # edgeone skill 入口
+└── references/                           # skill 的参考文档
+    ├── api/                              # API 调用模块
+    │   ├── README.md                     # 模块入口
+    │   ├── install.md                    # 场景：tccli 安装
+    │   └── ...
+    ├── acceleration/                     # 站点加速模块
+    │   ├── README.md                     # 模块入口
+    │   ├── cache-purge.md                # 场景：缓存刷新/预热
+    │   └── ...
+    ├── security/                         # 安全防护模块
+    │   ├── README.md                     # 模块入口
+    │   ├── security-report.md            # 场景：安全周报
+    │   └── ...
+    └── ...                               # 其他模块...
+```
 
 ## 安全设计
 
