@@ -30,7 +30,7 @@ When displaying site status to users, the effective status should be determined 
 | Priority | Condition | Display Status |
 |---|---|---|
 | 1 | `Status == "initializing"` | Initializing — **must be filtered out, do not display to user** |
-| 2 | `Status == "forbidden"` | Banned |
+| 2 | `Status == "forbidden"` | forbidden |
 | 3 | `Status == "deleted"` | Deleted |
 | 4 | `ActiveStatus == "changing"` | Changing |
 | 5 | `ActiveStatus == "inPausing"` | Pausing |
