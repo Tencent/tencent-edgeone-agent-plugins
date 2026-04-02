@@ -23,6 +23,22 @@ When you create two or more sites with the same site name, you need to use an **
 - ❌ **NS Access**: A domain can only be accessed via NS once, does not support sites with same name
 - ⚠️ **Mutual Exclusion Rule**: Domains accessed via NS cannot use other access modes; domains accessed via CNAME/DNSPod hosting cannot use NS access
 
+### Site Status Determination Logic
+
+When displaying site status to users, the effective status should be determined by evaluating the following fields from `DescribeZones` response **in order** (first match wins):
+
+| Priority | Condition | Display Status |
+|---|---|---|
+| 1 | `Status == "initializing"` | Initializing — **must be filtered out, do not display to user** |
+| 2 | `Status == "forbidden"` | Banned |
+| 3 | `Status == "deleted"` | Deleted |
+| 4 | `ActiveStatus == "changing"` | Changing |
+| 5 | `ActiveStatus == "inPausing"` | Pausing |
+| 6 | `Paused == true` | Paused |
+| 7 | None of the above | Active |
+
+> **Important**: This logic must be applied in all scenarios where site status is displayed, including site selection (D0) and status queries (F).
+
 ## Access Mode Description
 
 EdgeOne supports four site access modes:
@@ -356,9 +372,13 @@ When user directly triggers "add domain", you need to first determine which site
    --Filters '[{"Name":"zone-name","Values":["example.com"]}]'
    ```
 
-3. **Handle based on query results**:
+3. **Filter and handle based on query results**:
 
-   - **No matching site**: Prompt user that the root domain has not been onboarded to EdgeOne, guide to [Scenario A: Confirm Plan](#scenario-a-confirm-plan) to begin full onboarding process.
+   First, filter out sites with `Status == "initializing"` — these sites are still initializing and must not be displayed.
+
+   Then handle the remaining sites:
+
+   - **No matching site** (or all filtered out): Prompt user that the root domain has not been onboarded to EdgeOne, guide to [Scenario A: Confirm Plan](#scenario-a-confirm-plan) to begin full onboarding process.
 
    - **Only 1 site**: Display site info (ZoneId, alias, access mode, acceleration area, status) to user, proceed to D1 after confirmation.
 
@@ -367,8 +387,8 @@ When user directly triggers "add domain", you need to first determine which site
      - **ZoneId**
      - **Access Mode** (Type: dnsPodAccess / partial / full)
      - **Acceleration Area** (Area: mainland / overseas / global)
-     - **Status** (ActiveStatus: active / paused / inactive)
-     - Suggest prioritizing sites with `active` status
+     - **Status**: Determined using the [Site Status Determination Logic](#site-status-determination-logic)
+     - Suggest prioritizing sites with `Active` status
 
    > **No Automatic Selection**: When multiple matching sites exist, **must** wait for user's explicit selection before continuing; never decide on your own.
 
@@ -477,6 +497,6 @@ CNAME access needs to first apply for certificate, complete domain validation, t
 
 Call `DescribeZones` to query target site status.
 
-> **Important**: When querying site list, should filter out sites with `Status` as `initializing`. These sites are still initializing and haven't completed creation; should not be displayed to users.
+> **Important**: When displaying site status, must use the [Site Status Determination Logic](#site-status-determination-logic) to determine and display the effective status. Sites with `Status == "initializing"` must be filtered out and not displayed to users.
 
 > Refer to [../api/zone-discovery.md](../api/zone-discovery.md) for more query methods.
