@@ -341,26 +341,111 @@ After user confirms DNS / file configuration complete, call `VerifyOwnership`.
 
 > **No-Domain Access Sites**: Sites created via no-domain access mode can also add Layer 7 acceleration domains anytime; after adding, can use complete Layer 7 acceleration features.
 
+### D0: Determine Target Site
+
+> If entering this scenario from a continuous flow of Scenario B/C, ZoneId is already known; you can skip this step and go directly to D1.
+
+When user directly triggers "add domain", you need to first determine which site to add the domain to.
+
+**Steps:**
+
+1. **Extract root domain**: Extract the root domain (e.g., `example.com`) from the acceleration domain provided by user (e.g., `www.example.com`).
+
+2. **Query matching sites**: Call `DescribeZones` with `zone-name` filter by root domain:
+   ```
+   --Filters '[{"Name":"zone-name","Values":["example.com"]}]'
+   ```
+
+3. **Handle based on query results**:
+
+   - **No matching site**: Prompt user that the root domain has not been onboarded to EdgeOne, guide to [Scenario A: Confirm Plan](#scenario-a-confirm-plan) to begin full onboarding process.
+
+   - **Only 1 site**: Display site info (ZoneId, alias, access mode, acceleration area, status) to user, proceed to D1 after confirmation.
+
+   - **Multiple sites** (same root domain may have multiple sites): **Must** display all matching sites for user selection; never automatically select the first one or any arbitrary one. Display info should include:
+     - **Site Alias** (AliasZoneName) — the most intuitive distinguishing identifier
+     - **ZoneId**
+     - **Access Mode** (Type: dnsPodAccess / partial / full)
+     - **Acceleration Area** (Area: mainland / overseas / global)
+     - **Status** (ActiveStatus: active / paused / inactive)
+     - Suggest prioritizing sites with `active` status
+
+   > **No Automatic Selection**: When multiple matching sites exist, **must** wait for user's explicit selection before continuing; never decide on your own.
+
 ### D1: Collect Parameters
 
 Need to confirm following information with user before calling:
 
 1. **Acceleration Domain** (DomainName): Subdomain to onboard, e.g., `www.example.com`
-2. **IPv6 Access** (IPv6Status): Whether to enable IPv6 access
-3. **Origin Configuration** (OriginInfo), including:
-   - **Origin Type** (OriginType)
-   - **Origin Address** (Origin): Fill in IP, domain, COS bucket domain, origin group ID, etc., based on origin type
-   - **Origin Host** (OriginHost, optional): **Only configurable when origin type is IP or domain**
-     - Used to specify Host header of origin request
-     - Other origin types (such as COS, origin group, etc.) do not support custom origin HOST
-   - If private object storage origin access needed, confirm PrivateAccess and authentication parameters
-4. **Origin Protocol** (OriginProtocol, optional): FOLLOW / HTTP / HTTPS
-5. **Origin Port** (optional): HTTP origin port / HTTPS origin port
+2. **IPv6 Access** (IPv6Status): Whether to enable IPv6 access, values:
+   - `follow`: Follow site IPv6 configuration (default)
+   - `on`: Enable
+   - `off`: Disable
+3. **Origin Configuration** (OriginInfo): See [OriginInfo Data Structure](#origininfo-data-structure) below
+4. **Origin Protocol** (OriginProtocol, optional): FOLLOW (default) / HTTP / HTTPS
+5. **Origin Port** (optional): HTTP origin port (default 80) / HTTPS origin port (default 443)
 
-> **Origin Host Note**:
-> - Origin Host is used to control Host request header when fetching from origin
-> - Only configurable when origin type is `IP` or `domain`
-> - When origin type is `object storage`, `origin group`, `load balancer`, etc., this configuration option is not provided
+#### OriginInfo Data Structure
+
+OriginInfo is a required parameter for `CreateAccelerationDomain`, defining origin information.
+
+##### Required Fields
+
+| Field | Type | Description |
+|---|---|---|
+| **OriginType** | string | Origin type, see values below |
+| **Origin** | string | Origin address, fill in different values based on OriginType |
+
+##### OriginType Values and Origin Mapping
+
+| OriginType | Description | Origin Value |
+|---|---|---|
+| `IP_DOMAIN` | IPv4, IPv6, or domain type origin | IP address or domain, e.g., `1.1.1.1`, `origin.example.com` |
+| `COS` | Tencent Cloud COS object storage origin | COS bucket access domain |
+| `AWS_S3` | AWS S3 object storage origin | S3 bucket access domain |
+| `ORIGIN_GROUP` | Origin group type origin | Origin group ID; if referencing another site's origin group, format: `{OriginGroupID}@{ZoneID}` |
+| `VOD` | Cloud VOD | Cloud VOD application ID |
+| `LB` | Load balancer (whitelist only) | Load balancer instance ID; if referencing another site's LB, format: `{LBID}@{ZoneID}` |
+| `SPACE` | Origin offload (whitelist only) | Origin offload space ID |
+
+##### Optional Fields
+
+| Field | Type | Applicable Scenario | Description |
+|---|---|---|---|
+| **HostHeader** | string | Only when `OriginType = IP_DOMAIN` | Custom origin HOST header. **Do not pass this field** for other origin types, otherwise it will cause errors |
+| **PrivateAccess** | string | Only when `OriginType = COS` or `AWS_S3` | Whether to use private authentication: `on` / `off` (default off) |
+| **PrivateParameters** | list | Only when `PrivateAccess = on` | Private authentication parameter list |
+| **BackupOrigin** | string | Only when `OriginType = ORIGIN_GROUP` | Backup origin group ID (legacy feature, not recommended) |
+| **VodOriginScope** | string | Only when `OriginType = VOD` | Origin scope: `all` (default, all files in app) / `bucket` (specified bucket) |
+| **VodBucketId** | string | Only when `OriginType = VOD` and `VodOriginScope = bucket` | VOD bucket ID |
+
+##### Most Common Scenario Examples
+
+**IP/Domain origin** (most common):
+```json
+{
+  "OriginType": "IP_DOMAIN",
+  "Origin": "1.1.1.1"
+}
+```
+
+**COS origin (private access)**:
+```json
+{
+  "OriginType": "COS",
+  "Origin": "bucket-xxx.cos.ap-guangzhou.myqcloud.com",
+  "PrivateAccess": "on",
+  "PrivateParameters": [{"Name": "SecretId", "Value": "xxx"}, {"Name": "SecretKey", "Value": "xxx"}]
+}
+```
+
+**Origin group**:
+```json
+{
+  "OriginType": "ORIGIN_GROUP",
+  "Origin": "og-testorigin"
+}
+```
 
 ### D2: Call CreateAccelerationDomain
 
