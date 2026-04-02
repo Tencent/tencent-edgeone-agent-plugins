@@ -15,13 +15,13 @@ End-to-end domain onboarding to EdgeOne: confirm plan → create zone → verify
        ↓
 4. Add acceleration domain (`CreateAccelerationDomain`)
        ↓
-5. Apply for and deploy HTTPS certificate (see cert-manager.md)
+5. Apply for and deploy HTTPS certificate (see `cert-manager.md`)
        ↓
    Onboarding complete
 ```
 
 > You can check verification status at any time via `DescribeIdentifications`.
-> For certificate queries and operations, see [cert-manager.md](cert-manager.md).
+> For certificate queries and operations, see `cert-manager.md`.
 
 ## Scenario A: Confirm Plan
 
@@ -67,13 +67,13 @@ If the user decides not to purchase, remind them: **A zone requires a bound plan
 
 ### Next Step
 
-After plan confirmation, proceed to [Scenario B: Create Zone](#scenario-b-create-zone) with the PlanId.
+After plan confirmation, proceed to Scenario B: Create Zone with the PlanId.
 
 ## Scenario B: Create Zone
 
 **Trigger**: User says "onboard example.com to EdgeOne", "create a zone", "create a new zone", or as the follow-up step after plan confirmation.
 
-> If the user triggers this scenario directly (without going through Scenario A), guide them to complete [Scenario A: Confirm Plan](#scenario-a-confirm-plan) first before continuing.
+> If the user triggers this scenario directly (without going through Scenario A), guide them to complete Scenario A: Confirm Plan first before continuing.
 
 > **No automatic creation**: Creating a zone consumes a plan's zone quota. You **must** confirm the zone domain, access mode, and service region with the user before execution — never decide on your own.
 
@@ -85,7 +85,7 @@ After plan confirmation, proceed to [Scenario B: Create Zone](#scenario-b-create
 
 ### Next Steps for NS Access
 
-Inform the user that they need to change the DNS servers at their domain registrar to the NameServers returned in the response, then go to [Scenario C: Verify Ownership](#scenario-c-verify-ownership).
+Inform the user that they need to change the DNS servers at their domain registrar to the NameServers returned in the response, then go to Scenario C: Verify Ownership.
 
 ### Next Steps for CNAME Access
 
@@ -94,13 +94,13 @@ Inform the user of two verification methods (choose either one), with verificati
 1. **DNS verification**: Add a TXT record in DNS
 2. **File verification**: Place a verification file in the origin server's root directory
 
-Wait for the user to confirm the configuration is complete, then go to [Scenario C: Verify Ownership](#scenario-c-verify-ownership).
+Wait for the user to confirm the configuration is complete, then go to Scenario C: Verify Ownership.
 
 ## Scenario C: Verify Ownership
 
 **Trigger**: User says "verify the zone", "check DNS switch", "ownership verification", or as the follow-up step after zone creation.
 
-> The user can choose to skip ownership verification and go directly to [Scenario D: Add Acceleration Domain](#scenario-d-add-acceleration-domain), returning to verify later.
+> The user can choose to skip ownership verification and go directly to Scenario D: Add Acceleration Domain, returning to verify later.
 
 ### C1: Query Verification Status (`DescribeIdentifications`)
 
@@ -147,7 +147,7 @@ After user confirmation, call `CreateAccelerationDomain`.
 
 **Trigger**: After domain addition, user says "configure HTTPS", "apply for certificate", or as the final step in the onboarding process.
 
-> For complete certificate management (CNAME manual verification, deploy custom certificates, batch inspection, etc.), see [cert-manager.md](cert-manager.md).
+> For complete certificate management (CNAME manual verification, deploy custom certificates, batch inspection, etc.), see `cert-manager.md`.
 
 ### E1: NS Access / DNSPod Hosting (Auto Verification, One Step)
 
@@ -155,7 +155,7 @@ After user confirmation, call `CreateAccelerationDomain`.
 
 ### E2: CNAME Access (Manual Verification)
 
-CNAME access requires applying for the certificate first, completing domain verification, and then deploying — the process is longer. See the complete steps in [cert-manager.md Scenario B2](cert-manager.md#b2-cname-access-manual-verification).
+CNAME access requires applying for the certificate first, completing domain verification, and then deploying — the process is longer. See the complete steps in `cert-manager.md` Scenario B2.
 
 ## Scenario F: Check Onboarding Status
 
@@ -163,4 +163,4 @@ CNAME access requires applying for the certificate first, completing domain veri
 
 Call `DescribeZones` to query the target zone's status.
 
-> See [../api/zone-discovery.md](../api/zone-discovery.md) for more query methods.
+> See `../api/zone-discovery.md` for more query methods.

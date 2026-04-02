@@ -8,7 +8,7 @@ Manage HTTPS certificates for EdgeOne domains: query certificate status, apply f
 
 Call `DescribeDefaultCertificates`.
 
-> You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
+> You need to obtain the ZoneId first — see `../api/zone-discovery.md`.
 
 **Output suggestion**: Display the certificate list in a table, marking certificates expiring soon (≤ 30 days).
 

@@ -11,7 +11,7 @@ Periodically query L7/L4 traffic trends and automatically generate Markdown dail
 | DescribeTimingL4Data | Query L4 time-series traffic/bandwidth/connection data |
 
 > **Command usage**: This document only lists API names and workflow guidance.
-> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm complete parameters and response descriptions.
+> Before execution, consult the API documentation via `../api/api-discovery.md` to confirm complete parameters and response descriptions.
 > For full filter condition documentation, see [Metric Analysis Filter Conditions](https://edgeone.ai/document/56985).
 
 ### DescribeTopL7AnalysisData Available Dimensions
@@ -189,7 +189,7 @@ tccli auth login
 > The terminal will print an authorization link and block until the user completes browser authorization; the command exits automatically upon success.
 > Never ask the user for `SecretId` / `SecretKey`, and never execute commands that might expose credential contents.
 
-2. A ZoneId must be obtained first. Refer to [../api/zone-discovery.md](../api/zone-discovery.md).
+2. A ZoneId must be obtained first. Refer to `../api/zone-discovery.md`.
 
 3. Obtain the account UIN for report headers by calling:
 

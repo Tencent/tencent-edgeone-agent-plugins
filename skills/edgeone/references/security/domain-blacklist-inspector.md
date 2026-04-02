@@ -13,13 +13,13 @@ Query the security policies associated with a specified EdgeOne domain, parse IP
 | `DescribeSecurityIPGroupContent` | Query detailed entries of a specified IP group |
 
 > **Command usage**: This document only lists API names and process guidelines.
-> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm the complete parameters and response descriptions.
+> Before execution, consult the API documentation via `../api/api-discovery.md` to confirm the complete parameters and response descriptions.
 
 ## Prerequisites
 
 1. All Tencent Cloud API calls are executed via `tccli` — confirm login authentication is complete before execution.
 
-2. You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
+2. You need to obtain the ZoneId first — see `../api/zone-discovery.md`.
 3. The user must explicitly provide the target domain (e.g., `example.com`); if the user says "this domain" without specifying, ask for clarification first.
 
 ## Execution Flow

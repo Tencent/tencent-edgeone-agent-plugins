@@ -11,7 +11,7 @@ Manage the security protection status of EdgeOne zones: generate configuration s
 | `DescribeSecurityIPGroup` | Query the security IP group list |
 
 > **Command usage**: This document only lists API names and process guidelines.
-> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm the complete parameters and response descriptions.
+> Before execution, consult the API documentation via `../api/api-discovery.md` to confirm the complete parameters and response descriptions.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ tccli auth login
 > After execution, the terminal will print an authorization link and block until the user completes browser authorization — the command ends automatically upon success.
 > Never ask the user for `SecretId` / `SecretKey`, and do not execute commands that might expose credential contents.
 
-2. You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
+2. You need to obtain the ZoneId first — see `../api/zone-discovery.md`.
 
 ## Scenario A: Generate Current Security Configuration Snapshot
 

@@ -30,7 +30,7 @@ Call `DescribeContentQuota`.
 
 > **Full-site purge** (`purge_all`) is a high-impact operation: it clears all node cache for the zone, and a large number of requests will hit the origin in a short time, potentially causing a spike in origin load. You **must** clearly warn the user about the impact and wait for confirmation.
 
-**Follow-up**: Inform the user that the task has been submitted and provide the JobId. If execution results need to be confirmed, go to [Scenario D](#scenario-d-check-task-progress).
+**Follow-up**: Inform the user that the task has been submitted and provide the JobId. If execution results need to be confirmed, go to Scenario D: Check Task Progress.
 
 ## Scenario C: URL Prefetch
 
