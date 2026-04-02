@@ -46,7 +46,7 @@ A comprehensive Skill for the Tencent Cloud EdgeOne (Edge Security & Acceleratio
 > This Skill uses the [Tencent Cloud CLI](https://cloud.tencent.com/document/product/440) to call Tencent Cloud APIs. The Tencent Cloud CLI must be installed before use — if it is not yet installed, the Agent will automatically install it after the Skill starts.
 
 **Included modules:**
-
+ 
 | Module | Scenarios | Typical Triggers |
 |---|---|---|
 | **Acceleration** | <ul><li>Site onboarding wizard</li><li>Cache purge / prefetch</li><li>Certificate automation</li></ul> | <ul><li>"Onboard example.com to EO"</li><li>"Purge all cache under /static/"</li><li>"Certificate is expiring, help me renew"</li></ul> |
