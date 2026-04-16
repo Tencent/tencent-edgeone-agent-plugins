@@ -1,6 +1,21 @@
 ---
 name: tencent-edgeone
 description: A comprehensive skill for Tencent EdgeOne (Edge Security & Acceleration Platform), covering edge acceleration (DNS, certificates, caching, rule engine, L4 proxy, load balancing), edge security (DDoS protection, Web protection, Bot management), edge media (real-time video / image processing), edge development (Edge Functions, EdgeOne Pages), and more. Use this skill whenever a user mentions any EdgeOne / EO-related configuration, operations, querying, or troubleshooting needs.
+version: 1.0.0
+metadata:
+  openclaw:
+    requires:
+      bins:
+        - tccli
+        - gunzip
+      anyBins:
+        - curl
+        - wget
+        - jq
+        - python3
+      config:
+        - ~/.tccli/default.credential
+    homepage: https://edgeone.ai
 ---
 
 # Tencent EdgeOne Skill
@@ -39,6 +54,6 @@ Match the user's request to the appropriate module, load its entry document, and
 
 If the user's request **cannot match any module above**, or the module's reference files do not cover the scenario, fall back in the following order:
 1. First read `references/api/api-discovery.md` and try to find the relevant API through API discovery.
-2. If still unresolved, search the [Tencent EdgeOne product documentation](https://cloud.tencent.com/document/product/1552) for the latest information.
+2. If still unresolved, search the [Tencent EdgeOne product documentation](https://edgeone.ai/document) for the latest information.
 
 When reference files conflict with official documentation, **the official documentation takes precedence**.

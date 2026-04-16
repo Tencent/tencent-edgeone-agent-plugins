@@ -55,6 +55,6 @@ When reference files conflict with official documentation, **the official docume
 
 | Source | How to Search | Used For |
 |---|---|---|
-| EdgeOne API docs | [cloud.tencent.com/document/api/1552](https://cloud.tencent.com/document/api/1552) | API parameters, request examples, data structures |
+| EdgeOne API docs | [edgeone.ai/document/50454](https://edgeone.ai/document/50454) | API parameters, request examples, data structures |
 | teo API discovery | cloudcache commands in `api-discovery.md` | Dynamically find APIs, best practices |
-| Tencent Cloud CLI docs | [cloud.tencent.com/document/product/440](https://cloud.tencent.com/document/product/440) | tccli installation, configuration, usage |
+| Tencent Cloud CLI docs | [github.com/TencentCloud/tencentcloud-cli](https://github.com/TencentCloud/tencentcloud-cli) | tccli installation, configuration, usage |
