@@ -15,7 +15,7 @@ EdgeOne Agent Plugins 是帮助 AI Agent 在 [腾讯云 EdgeOne](https://edgeone
 /plugin marketplace add TencentEdgeOne/edgeone-agent-plugins
 
 # 2. 安装插件
-/plugin install edgeone-agent-plugins@edgeone
+/plugin install edgeone-agent-plugins@tencent-edgeone
 ```
 
 ### OpenAI Codex / Gemini CLI / Cursor / OpenCode / 其他 Agent
@@ -57,7 +57,7 @@ edgeone **包含以下能力：**
 
 #### Skill 文件结构
 
-edgeone 采用渐进式披露的思想，通过设计多级索引引导 Agent 按需读取文档，组织如下：
+edgeone 通过设计多级索引引导 Agent 按需读取文档，组织如下：
 
 ```
 edgeone/
