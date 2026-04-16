@@ -1,10 +1,10 @@
 # EdgeOne API Reference
 
-EdgeOne (Edge Security & Acceleration Platform) is managed through Tencent Cloud APIs. Currently using **tccli** (Tencent Cloud CLI) as the calling tool, with the service name **teo**.
+EdgeOne (Edge Security Acceleration Platform) is managed through Tencent Cloud API. Currently uses **tccli** (Tencent Cloud CLI) as the calling tool, with service name **teo**.
 
 ## Files in This Directory
 
-| File | Use Case |
+| File | Applicable Scenarios |
 |---|---|
 | `install.md` | First-time setup: install tccli (pipx / Homebrew), prepare Python environment |
 | `auth.md` | tccli is installed but missing credentials — browser OAuth login, logout, or multi-account management |
@@ -13,7 +13,7 @@ EdgeOne (Edge Security & Acceleration Platform) is managed through Tencent Cloud
 
 ## Overview
 
-**tccli** is Tencent Cloud's official CLI tool that supports calling all cloud APIs.
+**tccli** is Tencent Cloud's official CLI tool, supporting all cloud API calls.
 
 **Key elements:**
 - **Calling format** — `tccli teo <Action> [--param value ...]`
@@ -26,21 +26,21 @@ EdgeOne (Edge Security & Acceleration Platform) is managed through Tencent Cloud
 
 | Item | Description |
 |---|---|
-| Calling format | `tccli teo <Action> [--param value ...]` |
-| Region | Omit `--region` by default; add `--region <region>` only if the user explicitly specifies a region |
-| Parameter format | Non-simple types must be standard JSON |
-| Serial calls | tccli has config file contention issues with parallel calls — call one at a time |
-| Error capture | Every tccli command **must** end with `2>&1; echo "EXIT_CODE:$?"`, otherwise stderr will be swallowed and the actual error message will be invisible |
+| Invocation Form | `tccli teo <Action> [--param value ...]` |
+| Region | No `--region` by default; add `--region <region>` if user explicitly specifies region |
+| Parameter Format | Non-simple types must be standard JSON |
+| Serial Invocation | tccli has config file competition issues with parallel calls, please call one by one |
+| Error Capture | Every tccli command **must** end with `2>&1; echo "EXIT_CODE:$?"`, otherwise stderr will be swallowed and you won't see specific error messages |
 
 ## Quick Start
 
-**Before the first API call in each session**, run a tool check:
+**Before first API call in each session**, execute tool check first:
 
 ```sh
 tccli cvm DescribeRegions 2>&1; echo "EXIT_CODE:$?"
 ```
 
-Determine the next step based on the result:
+Determine next step based on result:
 
 | Result | Meaning | Next Step |
 |---|---|---|
@@ -50,10 +50,10 @@ Determine the next step based on the result:
 
 ## Fallback Retrieval Sources
 
-When files in this directory do not cover the topic, or you need to verify the latest values / limits, search the following sources.
-When reference files conflict with official documentation, **the official documentation takes precedence**.
+When files in this directory don't cover content, or need to confirm latest values / limits, retrieve via the following sources.
+When reference files conflict with official documentation, **official documentation takes precedence**.
 
-| Source | How to Search | Used For |
+| Source | Retrieval Method | Used For |
 |---|---|---|
 | EdgeOne API docs | [edgeone.ai/document/50454](https://edgeone.ai/document/50454) | API parameters, request examples, data structures |
 | teo API discovery | cloudcache commands in `api-discovery.md` | Dynamically find APIs, best practices |
