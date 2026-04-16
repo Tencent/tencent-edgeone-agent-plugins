@@ -41,7 +41,7 @@ For detailed installation instructions, see [INSTALL.md](INSTALL.md).
 
 ### edgeone
 
-A comprehensive Skill for the Tencent Cloud EdgeOne (Edge Security & Acceleration Platform), covering edge acceleration (DNS, certificates, caching, rule engine, L4 proxy, load balancing), edge security (DDoS protection, Web protection, Bot management), edge media (real-time video / image processing), edge development (Edge Functions, EdgeOne Pages), and more.
+A comprehensive Skill for Tencent Cloud EdgeOne that supports site access, domain configuration, TLS certificate management, cache control, security analysis, and observability.
 
 > This Skill uses the [Tencent Cloud CLI](https://github.com/TencentCloud/tencentcloud-cli.git) to call Tencent Cloud APIs. The Tencent Cloud CLI must be installed before use — if it is not yet installed, the Agent will automatically install it after the Skill starts.
 
