@@ -1,6 +1,6 @@
 {
     "$schema": "https://code.claude.com/schemas/marketplace.json",
-    "name": "edgeone",
+    "name": "tencent-edgeone",
     "owner": {
         "name": "Tencent EdgeOne",
         "url": "https://edgeone.ai"
