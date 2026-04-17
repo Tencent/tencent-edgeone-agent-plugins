@@ -15,7 +15,7 @@ Tencent EdgeOne Agent Plugins 是帮助 AI Agent 在 [腾讯云 EdgeOne](https:/
 /plugin marketplace add git@github.com:Tencent/tencent-edgeone-agent-plugins.git
 
 # 2. 安装插件
-/plugin install tencent-edgeone@edgeone
+/plugin install edgeone@tencent-edgeone
 ```
 
 ### OpenAI Codex / Gemini CLI / Cursor / OpenCode / 其他 Agent

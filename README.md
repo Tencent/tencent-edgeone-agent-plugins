@@ -15,7 +15,7 @@ Install via the plugin marketplace:
 /plugin marketplace add git@github.com:Tencent/tencent-edgeone-agent-plugins.git
 
 # 2. Install the plugin
-/plugin install tencent-edgeone@edgeone
+/plugin install edgeone@tencent-edgeone
 ```
 
 ### OpenAI Codex / Gemini CLI / Cursor / OpenCode / Other Agents
