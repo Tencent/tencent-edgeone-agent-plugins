@@ -1,5 +1,5 @@
 ---
-name: tencent-edgeone
+name: tencent-edgeone-skill
 description: A comprehensive skill for Tencent EdgeOne (Edge Security & Acceleration Platform), covering edge acceleration (DNS, certificates, caching, rule engine, L4 proxy, load balancing), edge security (DDoS protection, Web protection, Bot management), edge media (real-time video / image processing), edge development (Edge Functions, EdgeOne Pages), and more. Use this skill whenever a user mentions any EdgeOne / EO-related configuration, operations, querying, or troubleshooting needs.
 version: 1.0.0
 metadata:

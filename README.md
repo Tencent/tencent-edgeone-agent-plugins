@@ -1,8 +1,8 @@
-# EdgeOne Agent Plugins
+# Tencent EdgeOne Agent Plugins
 
 [中文](README.zh-CN.md) | English
 
-EdgeOne Agent Plugins is a collection of tools that help AI Agents perform configuration, operations, and troubleshooting on the [Tencent Cloud EdgeOne](https://edgeone.ai) platform.
+Tencent EdgeOne Agent Plugins is a collection of tools that help AI Agents perform configuration, operations, and troubleshooting on the [Tencent Cloud EdgeOne](https://edgeone.ai) platform.
 
 ## Installation
 
@@ -12,10 +12,10 @@ Install via the plugin marketplace:
 
 ```bash
 # 1. Register the marketplace
-/plugin marketplace add TencentEdgeOne/edgeone-agent-plugins
+/plugin marketplace add git@github.com:Tencent/tencent-edgeone-agent-plugins.git
 
 # 2. Install the plugin
-/plugin install edgeone-agent-plugins@tencent-edgeone
+/plugin install tencent-edgeone@edgeone
 ```
 
 ### OpenAI Codex / Gemini CLI / Cursor / OpenCode / Other Agents
@@ -24,22 +24,22 @@ For AI tools without a built-in plugin marketplace, tell your Agent:
 
 ```
 Please fetch and follow the instructions in:
-https://raw.githubusercontent.com/TencentEdgeOne/edgeone-agent-plugins/main/INSTALL.md
+https://raw.githubusercontent.com/Tencent/tencent-edgeone-agent-plugins/main/INSTALL.md
 ```
 
 You can also clone the repository and install manually:
 
 ```bash
-git clone https://github.com/TencentEdgeOne/edgeone-agent-plugins.git
+git clone https://github.com/Tencent/tencent-edgeone-agent-plugins.git
 # Copy to the appropriate directory for your Agent tool
-# e.g.: cp -r edgeone-agent-plugins/skills/edgeone ~/.claude/skills/
+# e.g.: cp -r tencent-edgeone-agent-plugins/skills/tencent-edgeone-skill ~/.claude/skills/
 ```
 
 For detailed installation instructions, see [INSTALL.md](INSTALL.md).
 
 ## Skills
 
-### edgeone
+### tencent-edgeone-skill
 
 A comprehensive Skill for Tencent Cloud EdgeOne that supports site access, domain configuration, TLS certificate management, cache control, security analysis, and observability.
 
@@ -58,8 +58,8 @@ A comprehensive Skill for Tencent Cloud EdgeOne that supports site access, domai
 The edgeone skill uses a multi-level index that guides the Agent to read documents on demand:
 
 ```
-edgeone/
-├── SKILL.md                              # edgeone skill entry point
+tencent-edgeone-skill/
+├── SKILL.md                              # tencent-edgeone-skill skill entry point
 └── references/                           # skill reference docs
     ├── api/                              # API calling module
     │   ├── README.md                     # module entry

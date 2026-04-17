@@ -1,8 +1,8 @@
-# EdgeOne Agent Plugins
+# Tencent EdgeOne Agent Plugins
 
 中文 | [English](README.md)
 
-EdgeOne Agent Plugins 是帮助 AI Agent 在 [腾讯云 EdgeOne](https://edgeone.ai) 平台上进行配置、运维与问题排查的工具集合。
+Tencent EdgeOne Agent Plugins 是帮助 AI Agent 在 [腾讯云 EdgeOne](https://edgeone.ai) 平台上进行配置、运维与问题排查的工具集合。
 
 ## 安装
 
@@ -12,10 +12,10 @@ EdgeOne Agent Plugins 是帮助 AI Agent 在 [腾讯云 EdgeOne](https://edgeone
 
 ```bash
 # 1. 注册市场
-/plugin marketplace add TencentEdgeOne/edgeone-agent-plugins
+/plugin marketplace add git@github.com:Tencent/tencent-edgeone-agent-plugins.git
 
 # 2. 安装插件
-/plugin install edgeone-agent-plugins@tencent-edgeone
+/plugin install tencent-edgeone@edgeone
 ```
 
 ### OpenAI Codex / Gemini CLI / Cursor / OpenCode / 其他 Agent
@@ -24,22 +24,22 @@ EdgeOne Agent Plugins 是帮助 AI Agent 在 [腾讯云 EdgeOne](https://edgeone
 
 ```
 请获取并按照以下文件中的说明操作：
-https://raw.githubusercontent.com/TencentEdgeOne/edgeone-agent-plugins/main/INSTALL.md
+https://raw.githubusercontent.com/Tencent/tencent-edgeone-agent-plugins/main/INSTALL.md
 ```
 
 也可以手动克隆仓库后安装：
 
 ```bash
-git clone https://github.com/TencentEdgeOne/edgeone-agent-plugins.git
+git clone https://github.com/Tencent/tencent-edgeone-agent-plugins.git
 # 根据你的 Agent 工具，复制到对应目录
-# 例如：cp -r edgeone-agent-plugins/skills/edgeone ~/.claude/skills/
+# 例如：cp -r tencent-edgeone-agent-plugins/skills/tencent-edgeone-skill ~/.claude/skills/
 ```
 
 详细的安装方式请参阅 [INSTALL.md](INSTALL.md)。
 
 ## Skills
 
-### edgeone
+### tencent-edgeone-skill
 
 腾讯云 EdgeOne（边缘安全加速平台）综合 Skill，可支持通过该 skill 完成 EdgeOne 内的站点接入、域名配置、 HTTPS 证书管理、缓存管理以及安全分析、可观测性等相关操作。
 
@@ -47,7 +47,7 @@ git clone https://github.com/TencentEdgeOne/edgeone-agent-plugins.git
 
 #### 能力一览
 
-edgeone **包含以下能力：**
+tencent-edgeone-skill **包含以下能力：**
 
 | 模块 | 场景 | 典型触发场景 |
 |---|---|---|
@@ -57,11 +57,11 @@ edgeone **包含以下能力：**
 
 #### Skill 文件结构
 
-edgeone 通过设计多级索引引导 Agent 按需读取文档，组织如下：
+tencent-edgeone-skill 通过设计多级索引引导 Agent 按需读取文档，组织如下：
 
 ```
-edgeone/
-├── SKILL.md                              # edgeone skill 入口
+tencent-edgeone-skill/
+├── SKILL.md                              # tencent-edgeone-skill skill 入口
 └── references/                           # skill 的参考文档
     ├── api/                              # API 调用模块
     │   ├── README.md                     # 模块入口
