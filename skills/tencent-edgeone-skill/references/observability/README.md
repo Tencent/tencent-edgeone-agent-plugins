@@ -48,4 +48,4 @@ All operations require API calls via tccli. Before first use, complete the follo
 
 - [EdgeOne Product Documentation](https://edgeone.ai/document/56978)
 - [EdgeOne API Documentation](https://edgeone.ai/document/50454)
-- `../api/README.md`
+- API Usage Guide: `../api/README.md`
