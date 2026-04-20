@@ -47,4 +47,4 @@ All operations require calling APIs via tccli. Before first use, complete the fo
 
 - [EdgeOne Product Documentation](https://edgeone.ai/document)
 - [EdgeOne API Documentation](https://edgeone.ai/document/50454)
-- `../api/README.md`
+- API Calling Guide: `../api/README.md`
