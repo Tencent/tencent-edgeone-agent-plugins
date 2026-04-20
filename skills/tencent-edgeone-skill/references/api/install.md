@@ -9,7 +9,7 @@ EdgeOne APIs are called via **tccli** (Tencent Cloud CLI).
 | **pipx** | All platforms, auto-isolated environment | Python 3.8+ |
 | **Homebrew** | macOS | No Python required |
 
-- macOS with Homebrew already installed → go directly with the Homebrew route, skip to [Step 4](#4-install-tccli)
+- macOS with Homebrew already installed → go directly with the Homebrew route, skip to Step 4
 - Otherwise → go with the pipx route, continue to Step 2
 
 ## 2. Ensure Python Environment (pipx Route)
@@ -80,4 +80,4 @@ tccli --version
 
 ## Next Step
 
-After installation is complete, read [auth.md](auth.md) to configure credentials.
+After installation is complete, read `auth.md` to configure credentials.

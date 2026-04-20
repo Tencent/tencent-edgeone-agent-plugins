@@ -11,7 +11,7 @@ Query the origin status code distribution and origin health ratio for a specifie
 | DescribeTopL7AnalysisData | Query top N domains/URLs/status codes by request count or traffic — used to discover which domains carry traffic |
 
 > **Command usage**: This document only lists API names and workflow guidance.
-> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm complete parameters and response descriptions.
+> Before execution, consult the API documentation via `../api/api-discovery.md` to confirm complete parameters and response descriptions.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ tccli auth login
 > The terminal will print an authorization link after execution and remain blocked until the user completes browser authorization, after which the command ends automatically.
 > Never ask the user for `SecretId` / `SecretKey`, and do not execute any commands that could expose credential contents.
 
-2. ZoneId must be obtained first. Refer to [../api/zone-discovery.md](../api/zone-discovery.md).
+2. ZoneId must be obtained first. Refer to `../api/zone-discovery.md`.
    - **Shortcut**: Both `DescribeTimingL7OriginPullData` and `DescribeTimingL7AnalysisData` support `ZoneIds=["*"]` to query account-level aggregated data across all zones. Use this when the user does not specify a particular zone or wants an overview.
 
 ## Key API Parameter Notes
@@ -217,7 +217,7 @@ Compare edge vs origin error counts side by side:
 - Clearly label as "origin issue", "CDN/EO issue", or "mixed / further investigation needed"
 - For origin issues: recommend checking origin server logs, resource availability, and backend health
 - For CDN issues: recommend checking EO security rules, cache configuration, and node status
-- For deeper analysis: recommend using [eo-log-analyzer.md](eo-log-analyzer.md) for log-level troubleshooting
+- For deeper analysis: recommend using `eo-log-analyzer.md` for log-level troubleshooting
 
 **Output recommendation**: Present the response as "edge vs origin comparison table + root cause conclusion + recommendations".
 

@@ -1,6 +1,21 @@
 ---
 name: tencent-edgeone-skill
 description: A comprehensive skill for Tencent EdgeOne (Edge Security & Acceleration Platform), covering edge acceleration (DNS, certificates, caching, rule engine, L4 proxy, load balancing), edge security (DDoS protection, Web protection, Bot management), edge media (real-time video / image processing), edge development (Edge Functions, EdgeOne Pages), and more. Use this skill whenever a user mentions any EdgeOne / EO-related configuration, operations, querying, or troubleshooting needs.
+version: 1.0.0
+metadata:
+  openclaw:
+    requires:
+      bins:
+        - tccli
+        - gunzip
+      anyBins:
+        - curl
+        - wget
+        - jq
+        - python3
+      config:
+        - ~/.tccli/default.credential
+    homepage: https://edgeone.ai
 ---
 
 # Tencent EdgeOne Skill
@@ -11,7 +26,7 @@ Knowledge about EdgeOne APIs, configuration options, limits, and pricing may be 
 **Prefer retrieval over pre-trained knowledge** — the reference files in this skill are only a starting point.
 
 > All tasks **must be completed by calling APIs**.
-> See [references/api/README.md](references/api/README.md) for API calling conventions, environment checks, etc. **(must be read before starting any task)**.
+> See `references/api/README.md` for API calling conventions, environment checks, etc. **(must be read before starting any task)**.
 
 ## Security Red Lines
 
@@ -30,15 +45,15 @@ Match the user's request to the appropriate module, load its entry document, and
 
 | Module | Entry | Description |
 |---|---|---|
-| API | [references/api/README.md](references/api/README.md) | Calling conventions, tool installation, credential configuration, API discovery, zone & domain discovery (ZoneId lookup) |
-| Acceleration | [references/acceleration/README.md](references/acceleration/README.md) | Site onboarding, cache purge / prefetch, certificate management |
-| Security | [references/security/README.md](references/security/README.md) | Security policy template audit, blocklist IP group query, security report |
-| Observability | [references/observability/README.md](references/observability/README.md) | Traffic Daily Report Generation, Origin Health Inspection, Offline Log Download and Analysis |
+| API | `references/api/README.md` | Calling conventions, tool installation, credential configuration, API discovery, zone & domain discovery (ZoneId lookup) |
+| Acceleration | `references/acceleration/README.md` | Site onboarding, cache purge / prefetch, certificate management |
+| Security | `references/security/README.md` | Security policy template audit, blocklist IP group query, security report |
+| Observability | `references/observability/README.md` | Traffic Daily Report Generation, Origin Health Inspection, Offline Log Download and Analysis |
 
 ## Fallback Retrieval
 
 If the user's request **cannot match any module above**, or the module's reference files do not cover the scenario, fall back in the following order:
-1. First read [references/api/api-discovery.md](references/api/api-discovery.md) and try to find the relevant API through API discovery.
-2. If still unresolved, search the [Tencent EdgeOne product documentation](https://cloud.tencent.com/document/product/1552) for the latest information.
+1. First read `references/api/api-discovery.md` and try to find the relevant API through API discovery.
+2. If still unresolved, search the [Tencent EdgeOne product documentation](https://edgeone.ai/document) for the latest information.
 
 When reference files conflict with official documentation, **the official documentation takes precedence**.

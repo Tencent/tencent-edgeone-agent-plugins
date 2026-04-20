@@ -41,7 +41,7 @@ git clone https://github.com/Tencent/tencent-edgeone-agent-plugins.git
 
 ### tencent-edgeone-skill
 
-腾讯云 EdgeOne（边缘安全加速平台）综合 Skill，覆盖边缘加速（DNS、证书、缓存、规则引擎、四层代理、负载均衡）、边缘安全（DDoS 防护、Web 防护、Bot 管理）、边缘媒体（视频 / 图片即时处理）、边缘开发（边缘函数、EdgeOne Pages）等平台能力。
+腾讯云 EdgeOne（边缘安全加速平台）综合 Skill，可支持通过该 skill 完成 EdgeOne 内的站点接入、域名配置、 HTTPS 证书管理、缓存管理以及安全分析、可观测性等相关操作。
 
 > 本 Skill 通过 [腾讯云 CLI](https://cloud.tencent.com/document/product/440) 调用腾讯云 API 来实现相关能力。使用前需要安装腾讯云 CLI，如果您尚未安装，Agent 会在启动 Skill 后自动完成安装。
 
@@ -57,7 +57,7 @@ tencent-edgeone-skill **包含以下能力：**
 
 #### Skill 文件结构
 
-tencent-edgeone-skill 采用渐进式披露的思想，通过设计多级索引引导 Agent 按需读取文档，组织如下：
+tencent-edgeone-skill 通过设计多级索引引导 Agent 按需读取文档，组织如下：
 
 ```
 tencent-edgeone-skill/
