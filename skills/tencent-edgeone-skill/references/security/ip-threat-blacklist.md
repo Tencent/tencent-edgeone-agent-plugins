@@ -11,7 +11,7 @@ Analyze high-concentration threat IPs based on EdgeOne L7 access data, write the
 | `ModifySecurityIPGroup` | Modify security IP group entries (write blocklist IPs) |
 
 > **Command usage**: This document only lists API names and process guidelines.
-> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm the complete parameters and response descriptions.
+> Before execution, consult the API documentation via `../api/api-discovery.md` to confirm the complete parameters and response descriptions.
 
 ## Prerequisites
 
@@ -24,12 +24,12 @@ tccli auth login
 > After execution, the terminal will print an authorization link and block until the user completes browser authorization — the command ends automatically upon success.
 > Never ask the user for `SecretId` / `SecretKey`, and do not execute commands that might expose credential contents.
 
-2. You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
+2. You need to obtain the ZoneId first — see `../api/zone-discovery.md`.
 
 3. **Write operation security red lines**:
    - Before executing `ModifySecurityIPGroup`, you **must** show the complete change Diff to the user and wait for explicit confirmation before executing.
    - **Only write to the blocklist IP group specified by the user** — never select or create an IP group on your own.
-   - If the user has not explicitly specified a target IP group, guide them to first use [domain-blacklist-inspector.md](domain-blacklist-inspector.md) to identify the target blocklist group ID before proceeding.
+   - If the user has not explicitly specified a target IP group, guide them to first use `domain-blacklist-inspector.md` to identify the target blocklist group ID before proceeding.
 
 ## Scenario A: Analyze High-Concentration Threat IPs
 
@@ -64,7 +64,7 @@ tccli auth login
 #### Step 1: Confirm Target Blocklist IP Group
 
 1. Ask the user which blocklist IP group to write to (must be explicitly specified by the user — never decide on your own)
-2. If the user is unsure about the target IP group, guide them to first execute [domain-blacklist-inspector.md](domain-blacklist-inspector.md) to look it up
+2. If the user is unsure about the target IP group, guide them to first execute `domain-blacklist-inspector.md` to look it up
 3. Call the `DescribeSecurityIPGroup` API to query and display the target IP group's current status (name, ID, existing entry count)
 
 #### Step 2: Confirm IPs to Be Blocked
@@ -112,7 +112,7 @@ Do you want to proceed? (Yes/No)
 
 Call the `DescribeSecurityIPGroup` API to query and display the current entry list of the specified IP group.
 
-> To find the blocklist IP group ID associated with a domain, see [domain-blacklist-inspector.md](domain-blacklist-inspector.md).
+> To find the blocklist IP group ID associated with a domain, see `domain-blacklist-inspector.md`.
 
 ## Output Format
 

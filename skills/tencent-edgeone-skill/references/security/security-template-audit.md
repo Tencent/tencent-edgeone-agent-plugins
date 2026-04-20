@@ -11,13 +11,13 @@ Audit EdgeOne security policy template coverage, output template-to-bound-resour
 | `DescribeSecurityTemplateBindings` | Query the binding relationship between templates and domains |
 
 > **Command usage**: This document only lists API names and process guidelines.
-> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm the complete parameters and response descriptions.
+> Before execution, consult the API documentation via `../api/api-discovery.md` to confirm the complete parameters and response descriptions.
 
 ## Prerequisites
 
 1. All Tencent Cloud API calls are executed via `tccli` — confirm login authentication is complete before execution.
 
-2. You need to obtain the ZoneId first — see [../api/zone-discovery.md](../api/zone-discovery.md).
+2. You need to obtain the ZoneId first — see `../api/zone-discovery.md`.
 
 ## Execution Flow
 
@@ -43,7 +43,7 @@ Call the `DescribeSecurityTemplateBindings` API, collect the list of domains bou
 
 To identify uncovered domains, you need the complete domain list under the zone — call the `DescribeZoneRelatedDomains` API.
 
-> If this API is unavailable or returns empty, try finding other APIs to get the domain list (such as `DescribeAccelerationDomains`) via [api-discovery.md](../api/api-discovery.md).
+> If this API is unavailable or returns empty, try finding other APIs to get the domain list (such as `DescribeAccelerationDomains`) via `../api/api-discovery.md`.
 
 ### Step 5: Cross-Compare to Identify Uncovered Domains
 

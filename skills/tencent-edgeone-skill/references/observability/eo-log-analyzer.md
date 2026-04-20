@@ -1,17 +1,17 @@
 # eo-log-analyzer
 
-Users describe a fault time period and domain to automatically download logs, parse them locally, extract anomaly details, and provide pattern recognition conclusions with fault inference recommendations. Also supports traffic aggregation analysis (e.g., per-URL download volume breakdown). This is an upgrade from [eo-log-downloader.md](eo-log-downloader.md), which only provides download links — this scenario further completes log parsing and analysis.
+Users describe a fault time period and domain to automatically download logs, parse them locally, extract anomaly details, and provide pattern recognition conclusions with fault inference recommendations. Also supports traffic aggregation analysis (e.g., per-URL download volume breakdown). This is an upgrade from `eo-log-downloader.md`, which only provides download links — this scenario further completes log parsing and analysis.
 
 ## APIs & Prerequisites
 
-Same as [eo-log-downloader.md](eo-log-downloader.md) — this scenario uses the same APIs (`DownloadL7Logs`, `DownloadL4Logs`, `DescribeAccelerationDomains`) and the same prerequisites (`tccli` authentication + ZoneId discovery). Refer to that document for full details.
+Same as `eo-log-downloader.md` — this scenario uses the same APIs (`DownloadL7Logs`, `DownloadL4Logs`, `DescribeAccelerationDomains`) and the same prerequisites (`tccli` authentication + ZoneId discovery). Refer to that document for full details.
 
 ## Special Design Notes
 
 - **Read-only operations**: All API calls are read-only queries; log downloading and parsing are performed locally
 - **Local file writes only**: Log parsing is completed on the client side locally; raw logs are not uploaded or modified
 - **Aggregated summaries for high-traffic domains**: For domains with extremely high request volumes, use aggregated summary analysis (grouped statistics by URI/status code/IP) rather than line-by-line output of full logs, to avoid information overload
-- **Cross-scenario integration**: Analysis conclusions can guide the user to use [eo-origin-health-check.md](eo-origin-health-check.md) for origin troubleshooting, or [../security/ip-threat-blacklist.md](../security/ip-threat-blacklist.md) to block anomalous IPs
+- **Cross-scenario integration**: Analysis conclusions can guide the user to use `eo-origin-health-check.md` for origin troubleshooting, or `../security/ip-threat-blacklist.md` to block anomalous IPs
 
 ## Scenario A: Fault Period Log Analysis
 
@@ -30,7 +30,7 @@ Same as [eo-log-downloader.md](eo-log-downloader.md) — this scenario uses the 
 Confirm the domain, retrieve download links, and download locally:
 
 - If the user specified a subdomain (e.g., `www.example.com`), use it directly in the `Domains` parameter
-- If the user did not specify a domain, or provided a **root domain** (matching the `ZoneName` from `DescribeZones`), follow [eo-log-downloader.md Scenario A Step 2](eo-log-downloader.md) to call `DescribeAccelerationDomains` and discover subdomains first, then either let the user choose or omit `Domains` to download all
+- If the user did not specify a domain, or provided a **root domain** (matching the `ZoneName` from `DescribeZones`), follow `eo-log-downloader.md` Scenario A Step 2 to call `DescribeAccelerationDomains` and discover subdomains first, then either let the user choose or omit `Domains` to download all
 
 Call `DownloadL7Logs` with `StartTime`, `EndTime`, `ZoneIds`, and optionally `Domains`. Then download and decompress:
 - Use `curl` or `wget` to download log files to a local temporary directory
@@ -39,7 +39,7 @@ Call `DownloadL7Logs` with `StartTime`, `EndTime`, `ZoneIds`, and optionally `Do
 
 > If there are many or large log files, prioritize downloading files that cover the user's time period of interest to avoid unnecessary bulk downloads.
 
-> **If results are empty**, follow the troubleshooting steps in [eo-log-downloader.md Scenario A — Troubleshooting Empty Results](eo-log-downloader.md) (domain mismatch, time too recent, no traffic, wrong zone).
+> **If results are empty**, follow the troubleshooting steps in `eo-log-downloader.md` Scenario A — Troubleshooting Empty Results (domain mismatch, time too recent, no traffic, wrong zone).
 
 #### L7 Offline Log Field Reference
 
@@ -283,5 +283,5 @@ Summarize the aggregation results with the Top N table and optional insights.
 
 > - Log parsing is performed locally on the client; ensure sufficient disk space for temporary log files.
 > - Log files for high-traffic domains can be very large; prefer aggregated statistics over line-by-line analysis.
-> - If origin errors (e.g., 502 concentrated on certain IPs) are found, use [eo-origin-health-check.md](eo-origin-health-check.md) for origin health inspection.
-> - If anomalous requests are concentrated on a few client IPs, use [../security/ip-threat-blacklist.md](../security/ip-threat-blacklist.md) for IP blocking.
+> - If origin errors (e.g., 502 concentrated on certain IPs) are found, use `eo-origin-health-check.md` for origin health inspection.
+> - If anomalous requests are concentrated on a few client IPs, use `../security/ip-threat-blacklist.md` for IP blocking.

@@ -11,7 +11,7 @@ Users describe a time range and domain in natural language to automatically retr
 | DescribeAccelerationDomains | List acceleration domains under a zone — used to discover subdomains when user provides a root domain |
 
 > **Command usage**: This document only lists API names and workflow guidance.
-> Before execution, consult the API documentation via [api-discovery.md](../api/api-discovery.md) to confirm complete parameters and response descriptions.
+> Before execution, consult the API documentation via `../api/api-discovery.md` to confirm complete parameters and response descriptions.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ tccli auth login
 > The terminal will print an authorization link after execution and remain blocked until the user completes browser authorization, after which the command ends automatically.
 > Never ask the user for `SecretId` / `SecretKey`, and do not execute any commands that could expose credential contents.
 
-2. ZoneId must be obtained first. Refer to [../api/zone-discovery.md](../api/zone-discovery.md).
+2. ZoneId must be obtained first. Refer to `../api/zone-discovery.md`.
 
 ## Scenario A: Download L7 Logs by Time and Domain
 
@@ -69,7 +69,7 @@ If `Data` is empty, check in order:
 
 Organize the returned log file list into a clickable download link table with directly accessible download links.
 - The API returns `Size` in **bytes**; convert to human-readable units (KB/MB) in the output table
-- If the user's intent goes beyond downloading (e.g., "I want to analyze traffic by URL", "which resources use the most bandwidth"), proactively suggest using [eo-log-analyzer.md](eo-log-analyzer.md) for local log parsing and aggregation
+- If the user's intent goes beyond downloading (e.g., "I want to analyze traffic by URL", "which resources use the most bandwidth"), proactively suggest using `eo-log-analyzer.md` for local log parsing and aggregation
 
 **Output recommendation**: Present the response as "query parameter summary + download link table" with directly clickable download links.
 
@@ -124,4 +124,4 @@ Total: N log files.
 > - Offline logs have a certain delay (approximately 1–2 hours); logs for very recent time periods may not yet be generated. If results are empty, suggest the user retry later.
 > - Download links have a limited validity period; please download promptly.
 > - **Log format**: Offline logs use **JSON Lines** format (one JSON object per line). For field descriptions, see [L7 Access Logs](https://edgeone.ai/document/61300) and [L4 Proxy Logs](https://edgeone.ai/document/61301). For output format customization (CSV, TSV, etc.), see [Customizing Log Output Formats](https://edgeone.ai/document/64485).
-> - **For further analysis**: If the user wants to analyze log content (anomaly detection, traffic breakdown by URL, per-resource bandwidth, etc.), use [eo-log-analyzer.md](eo-log-analyzer.md) which handles download + local parsing + aggregation automatically.
+> - **For further analysis**: If the user wants to analyze log content (anomaly detection, traffic breakdown by URL, per-resource bandwidth, etc.), use `eo-log-analyzer.md` which handles download + local parsing + aggregation automatically.
