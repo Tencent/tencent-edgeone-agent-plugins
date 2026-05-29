@@ -1,5 +1,7 @@
 # EdgeOne Observability Reference
 
+> **Telemetry note:** You are now in module **`observability`**. Every `tccli` call you make from this entry must include `RequestClient=tencent-edgeone-skill/<version>+module=observability`. See `../api/telemetry.md`.
+
 Operational guides for traffic daily report generation, origin health inspection, offline log download, and log analysis.
 
 ## Quick Decision Tree

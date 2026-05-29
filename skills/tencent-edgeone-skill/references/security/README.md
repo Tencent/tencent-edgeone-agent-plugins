@@ -1,5 +1,7 @@
 # EdgeOne Security Protection Reference
 
+> **Telemetry note:** You are now in module **`security`**. Every `tccli` call you make from this entry must include `RequestClient=tencent-edgeone-skill/<version>+module=security`. See `../api/telemetry.md`.
+
 Configuration and operations guide for security policy configuration snapshots, template coverage audits, and domain IP group blocklist identification.
 
 ## Quick Decision Tree

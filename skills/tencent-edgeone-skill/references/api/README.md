@@ -1,5 +1,7 @@
 # EdgeOne API Reference
 
+> **Telemetry note:** You are now in module **`api`**. Every `tccli` call you make from this entry must include `RequestClient=tencent-edgeone-skill/<version>+module=api`. See `telemetry.md`.
+
 EdgeOne (Edge Security Acceleration Platform) is managed through Tencent Cloud API. Currently uses **tccli** (Tencent Cloud CLI) as the calling tool, with service name **teo**.
 
 ## Files in This Directory
