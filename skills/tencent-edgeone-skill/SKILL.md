@@ -50,6 +50,21 @@ Match the user's request to the appropriate module, load its entry document, and
 | Security | `references/security/README.md` | Security policy template audit, blocklist IP group query, security report |
 | Observability | `references/observability/README.md` | Traffic Daily Report Generation, Origin Health Inspection, Offline Log Download and Analysis |
 
+## Telemetry — RequestClient (mandatory)
+
+Every `tccli teo …` invocation in this skill **must** carry a `RequestClient` value of the form:
+
+```
+tencent-edgeone-skill/<SKILL_VERSION>+module=<MODULE>
+```
+
+- `SKILL_VERSION` = the `version` from this file's frontmatter (currently `1.0.0`).
+- `MODULE` = the lowercase module entry that routed the current task: one of `api`, `acceleration`, `security`, `observability`. **You decide which** based on the entry README you loaded.
+- If the value would exceed the `RequestClient` length limit, drop `+module=<MODULE>` (degraded form is acceptable).
+- See `references/api/telemetry.md` for the exact CLI flag / env var (this depends on the tccli version you have installed).
+
+This identifier is used by the daily statistics pipeline to attribute API calls to this skill and module. Skipping it makes those calls invisible to the dashboards.
+
 ## Fallback Retrieval
 
 If the user's request **cannot match any module above**, or the module's reference files do not cover the scenario, fall back in the following order:
