@@ -11,6 +11,7 @@ EdgeOne (Edge Security Acceleration Platform) is managed through Tencent Cloud A
 | `api-discovery.md` | Find API endpoints — search best practices, API lists, and documentation via cloudcache |
 | `zone-discovery.md` | Get zone / domain info: ZoneId lookup, reverse domain lookup, pagination handling |
 | `dnspod-integration.md` | DNSPod hosting access: detect domain hosting status, service authorization, access process |
+| `telemetry.md` | Mandatory `RequestClient` value for every tccli call so daily stats can attribute calls to this skill |
 
 ## Overview
 
