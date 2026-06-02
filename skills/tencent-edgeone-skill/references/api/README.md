@@ -1,6 +1,6 @@
 # EdgeOne API Reference
 
-> **Telemetry note:** You are now in module **`api`**. Every `tccli` call you make from this entry must carry `--request-client "tencent-edgeone-skill/<version>+module=api"`. See "Telemetry — RequestClient" below.
+> **Telemetry note:** You are now in module **`api`**. Every `tccli` call you make from this entry must carry `--request-client "tencent-edgeone-skill/<version> module/api"`. See "Telemetry — RequestClient" below.
 
 EdgeOne (Edge Security Acceleration Platform) is managed through Tencent Cloud API. Currently uses **tccli** (Tencent Cloud CLI) as the calling tool, with service name **teo**.
 
@@ -9,8 +9,10 @@ EdgeOne (Edge Security Acceleration Platform) is managed through Tencent Cloud A
 Every `tccli` call you issue while working in this skill — the connectivity probe, `teo` actions, and `dnspod` / `cam` integration calls alike — must carry the `--request-client` flag:
 
 ```sh
-tccli <service> <Action> --request-client "tencent-edgeone-skill/<version>+module=<module>" [other args]
+tccli <service> <Action> --request-client "tencent-edgeone-skill/<version> module/<module>" [other args]
 ```
+
+The value is a space-separated list of `key/value` tokens (User-Agent style): the head token `tencent-edgeone-skill/<version>` identifies the skill and its release, followed by `module/<module>`. New dimensions can be appended as extra `key/value` tokens later without breaking this grammar.
 
 - `<version>` — the `version` value from `SKILL.md`'s frontmatter (the YAML block at the top of `SKILL.md`). Read it from there at call time; do **not** hardcode a number, since it changes with each skill release.
 - `<module>` — lowercase string identifying the entry README you're working from: `api` / `acceleration` / `security` / `observability`. If the task fits none of these (e.g. you're in SKILL.md's fallback retrieval flow), use `other`.
@@ -33,7 +35,7 @@ tccli <service> <Action> --request-client "tencent-edgeone-skill/<version>+modul
 **tccli** is Tencent Cloud's official CLI tool, supporting all cloud API calls.
 
 **Key elements:**
-- **Calling format** — `tccli teo <Action> --request-client "tencent-edgeone-skill/<version>+module=<module>" [--param value ...]` (the telemetry flag is mandatory — see "Telemetry — RequestClient" above)
+- **Calling format** — `tccli teo <Action> --request-client "tencent-edgeone-skill/<version> module/<module>" [--param value ...]`
 - **Auto credentials** — Browser OAuth authorization is recommended, see `auth.md`
 - **API discovery** — Search best practices, API lists, and documentation online via cloudcache
 
@@ -43,7 +45,7 @@ tccli <service> <Action> --request-client "tencent-edgeone-skill/<version>+modul
 
 | Item | Description |
 |---|---|
-| Invocation Form | `tccli teo <Action> --request-client "tencent-edgeone-skill/<version>+module=<module>" [--param value ...]` (telemetry flag mandatory, see above) |
+| Invocation Form | `tccli teo <Action> --request-client "tencent-edgeone-skill/<version> module/<module>" [--param value ...]` |
 | Region | No `--region` by default; add `--region <region>` if user explicitly specifies region |
 | Parameter Format | Non-simple types must be standard JSON |
 | Serial Invocation | tccli has config file competition issues with parallel calls, please call one by one |
@@ -54,7 +56,7 @@ tccli <service> <Action> --request-client "tencent-edgeone-skill/<version>+modul
 **Before first API call in each session**, execute tool check first:
 
 ```sh
-tccli cvm DescribeRegions --request-client "tencent-edgeone-skill/<version>+module=api" 2>&1; echo "EXIT_CODE:$?"
+tccli cvm DescribeRegions --request-client "tencent-edgeone-skill/<version> module/api" 2>&1; echo "EXIT_CODE:$?"
 ```
 
 Determine next step based on result:
