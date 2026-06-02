@@ -1,6 +1,6 @@
 # EdgeOne Site Acceleration Reference
 
-> **Telemetry note:** You are now in module **`acceleration`**. Every `tccli` call you make from this entry must carry `--request-client "tencent-edgeone-skill/<version> module/acceleration"`. See `../api/README.md` → "Telemetry — RequestClient".
+> **Telemetry note:** You are now in module **`acceleration`**. Every `tccli` call you make from this entry must carry `--request-client "tencent-edgeone-skill/<version> module/acceleration"`.
 
 Configuration and operational guidance for site onboarding, domain management, cache purge/prefetch, and HTTPS certificates.
 

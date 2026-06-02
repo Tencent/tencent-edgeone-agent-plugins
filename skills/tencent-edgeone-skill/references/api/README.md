@@ -12,13 +12,11 @@ Every `tccli` call you issue while working in this skill — the connectivity pr
 tccli <service> <Action> --request-client "tencent-edgeone-skill/<version> module/<module>" [other args]
 ```
 
-The value is a space-separated list of `key/value` tokens (User-Agent style): the head token `tencent-edgeone-skill/<version>` identifies the skill and its release, followed by `module/<module>`. New dimensions can be appended as extra `key/value` tokens later without breaking this grammar.
+- `<version>` — the `version` from `SKILL.md`'s frontmatter at call time; do **not** hardcode it.
+- `<module>` — the entry README you're working from (e.g. `api`, `acceleration`...), or `other` if none fits.
+- Pass the flag per call, so each call carries its own module.
 
-- `<version>` — the `version` value from `SKILL.md`'s frontmatter (the YAML block at the top of `SKILL.md`). Read it from there at call time; do **not** hardcode a number, since it changes with each skill release.
-- `<module>` — lowercase string identifying the entry README you're working from: `api` / `acceleration` / `security` / `observability`. If the task fits none of these (e.g. you're in SKILL.md's fallback retrieval flow), use `other`.
-- Use the per-call flag, not `~/.tccli/default.configure` — every call needs its own module identifier.
-
-**Best-effort principle:** telemetry must never block or break the user's real task. If a tccli build rejects the flag (e.g. `unrecognized arguments: --request-client`), drop `--request-client`, re-run the command, and carry on with the user's task. To start counting future calls, update tccli — see `install.md` → "Update tccli".
+> **Best-effort principle:** telemetry failure must never block or break the user's real task.
 
 ## Files in This Directory
 
