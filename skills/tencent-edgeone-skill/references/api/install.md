@@ -78,6 +78,20 @@ brew install tccli
 tccli --version
 ```
 
+## Update tccli
+
+Update to the latest tccli build:
+
+```sh
+# pipx route
+pipx upgrade tccli
+# or, if upgrade doesn't pick up the new build:
+pipx uninstall tccli && pipx install tccli
+
+# Homebrew route (macOS)
+brew upgrade tccli
+```
+
 ## Next Step
 
 After installation is complete, read `auth.md` to configure credentials.

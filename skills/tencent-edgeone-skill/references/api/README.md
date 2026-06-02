@@ -4,18 +4,19 @@
 
 EdgeOne (Edge Security Acceleration Platform) is managed through Tencent Cloud API. Currently uses **tccli** (Tencent Cloud CLI) as the calling tool, with service name **teo**.
 
-## Telemetry — RequestClient (mandatory)
+## Telemetry — RequestClient (mandatory, best-effort)
 
-Every `tccli teo …` call must carry the `--request-client` flag:
+Every `tccli` call you issue while working in this skill — the connectivity probe, `teo` actions, and `dnspod` / `cam` integration calls alike — must carry the `--request-client` flag:
 
 ```sh
-tccli teo <Action> --request-client "tencent-edgeone-skill/<SKILL_VERSION>+module=<MODULE>" [other args]
+tccli <service> <Action> --request-client "tencent-edgeone-skill/<version>+module=<module>" [other args]
 ```
 
-- `<SKILL_VERSION>` = `version` from `SKILL.md` frontmatter (`1.0.0`).
-- `<MODULE>` = lowercase string — pick the entry README you're working from: `api` / `acceleration` / `security` / `observability`. If your task doesn't fit any of those (e.g. you're going through SKILL.md's fallback retrieval flow), use `other`.
+- `<version>` — the `version` value from `SKILL.md`'s frontmatter (the YAML block at the top of `SKILL.md`). Read it from there at call time; do **not** hardcode a number, since it changes with each skill release.
+- `<module>` — lowercase string identifying the entry README you're working from: `api` / `acceleration` / `security` / `observability`. If the task fits none of these (e.g. you're in SKILL.md's fallback retrieval flow), use `other`.
 - Use the per-call flag, not `~/.tccli/default.configure` — every call needs its own module identifier.
-- If your `tccli` rejects `--request-client` as unknown, upgrade tccli (see `install.md`).
+
+**Best-effort principle:** telemetry must never block or break the user's real task. If a tccli build rejects the flag (e.g. `unrecognized arguments: --request-client`), drop `--request-client`, re-run the command, and carry on with the user's task. To start counting future calls, update tccli — see `install.md` → "Update tccli".
 
 ## Files in This Directory
 
@@ -32,7 +33,7 @@ tccli teo <Action> --request-client "tencent-edgeone-skill/<SKILL_VERSION>+modul
 **tccli** is Tencent Cloud's official CLI tool, supporting all cloud API calls.
 
 **Key elements:**
-- **Calling format** — `tccli teo <Action> [--param value ...]`
+- **Calling format** — `tccli teo <Action> --request-client "tencent-edgeone-skill/<version>+module=<module>" [--param value ...]` (the telemetry flag is mandatory — see "Telemetry — RequestClient" above)
 - **Auto credentials** — Browser OAuth authorization is recommended, see `auth.md`
 - **API discovery** — Search best practices, API lists, and documentation online via cloudcache
 
@@ -42,7 +43,7 @@ tccli teo <Action> --request-client "tencent-edgeone-skill/<SKILL_VERSION>+modul
 
 | Item | Description |
 |---|---|
-| Invocation Form | `tccli teo <Action> [--param value ...]` |
+| Invocation Form | `tccli teo <Action> --request-client "tencent-edgeone-skill/<version>+module=<module>" [--param value ...]` (telemetry flag mandatory, see above) |
 | Region | No `--region` by default; add `--region <region>` if user explicitly specifies region |
 | Parameter Format | Non-simple types must be standard JSON |
 | Serial Invocation | tccli has config file competition issues with parallel calls, please call one by one |
@@ -53,7 +54,7 @@ tccli teo <Action> --request-client "tencent-edgeone-skill/<SKILL_VERSION>+modul
 **Before first API call in each session**, execute tool check first:
 
 ```sh
-tccli cvm DescribeRegions 2>&1; echo "EXIT_CODE:$?"
+tccli cvm DescribeRegions --request-client "tencent-edgeone-skill/<version>+module=api" 2>&1; echo "EXIT_CODE:$?"
 ```
 
 Determine next step based on result:
@@ -63,6 +64,7 @@ Determine next step based on result:
 | Normal JSON response | Tool is installed, credentials are valid | Proceed with API operations |
 | `command not found` / `not found` | tccli is not installed | Read `install.md` to install |
 | `secretId is invalid` or auth error | tccli is installed but missing credentials | Read `auth.md` to configure credentials |
+| `Unknown options: --request-client` | tccli too old for the telemetry flag | Drop the flag and re-run now (best-effort); then ask the user whether to update tccli to the latest build (see `install.md` → "Update tccli") |
 
 ## Fallback Retrieval Sources
 
