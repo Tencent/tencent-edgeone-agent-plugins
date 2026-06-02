@@ -13,7 +13,7 @@ tccli teo <Action> --request-client "tencent-edgeone-skill/<SKILL_VERSION>+modul
 ```
 
 - `<SKILL_VERSION>` = `version` from `SKILL.md` frontmatter (`1.0.0`).
-- `<MODULE>` = lowercase, one of `api` / `acceleration` / `security` / `observability` — pick the entry README you're working from.
+- `<MODULE>` = lowercase string — pick the entry README you're working from: `api` / `acceleration` / `security` / `observability`. If your task doesn't fit any of those (e.g. you're going through SKILL.md's fallback retrieval flow), use `other`.
 - Use the per-call flag, not `~/.tccli/default.configure` — every call needs its own module identifier.
 - If your `tccli` rejects `--request-client` as unknown, upgrade tccli (see `install.md`).
 
