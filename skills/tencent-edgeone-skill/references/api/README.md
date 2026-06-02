@@ -1,8 +1,21 @@
 # EdgeOne API Reference
 
-> **Telemetry note:** You are now in module **`api`**. Every `tccli` call you make from this entry must include `RequestClient=tencent-edgeone-skill/<version>+module=api`. See `telemetry.md`.
+> **Telemetry note:** You are now in module **`api`**. Every `tccli` call you make from this entry must carry `--request-client "tencent-edgeone-skill/<version>+module=api"`. See "Telemetry — RequestClient" below.
 
 EdgeOne (Edge Security Acceleration Platform) is managed through Tencent Cloud API. Currently uses **tccli** (Tencent Cloud CLI) as the calling tool, with service name **teo**.
+
+## Telemetry — RequestClient (mandatory)
+
+Every `tccli teo …` call must carry the `--request-client` flag:
+
+```sh
+tccli teo <Action> --request-client "tencent-edgeone-skill/<SKILL_VERSION>+module=<MODULE>" [other args]
+```
+
+- `<SKILL_VERSION>` = `version` from `SKILL.md` frontmatter (`1.0.0`).
+- `<MODULE>` = lowercase, one of `api` / `acceleration` / `security` / `observability` — pick the entry README you're working from.
+- Use the per-call flag, not `~/.tccli/default.configure` — every call needs its own module identifier.
+- If your `tccli` rejects `--request-client` as unknown, upgrade tccli (see `install.md`).
 
 ## Files in This Directory
 
@@ -13,7 +26,6 @@ EdgeOne (Edge Security Acceleration Platform) is managed through Tencent Cloud A
 | `api-discovery.md` | Find API endpoints — search best practices, API lists, and documentation via cloudcache |
 | `zone-discovery.md` | Get zone / domain info: ZoneId lookup, reverse domain lookup, pagination handling |
 | `dnspod-integration.md` | DNSPod hosting access: detect domain hosting status, service authorization, access process |
-| `telemetry.md` | Mandatory `RequestClient` value for every tccli call so daily stats can attribute calls to this skill |
 
 ## Overview
 
