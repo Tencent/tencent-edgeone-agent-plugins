@@ -11,7 +11,7 @@ EdgeOne supports DNSPod hosting access mode, enabling one-click domain onboardin
 **Invocation Example**:
 
 ```bash
-tccli dnspod DescribeDomain --Domain "example.com" --request-client "tencent-edgeone-skill/<version> module/api"
+tccli dnspod DescribeDomain --Domain "example.com" --request-client "tencent-edgeone-skill/1.1.0 module/api"
 ```
 
 **Key Response Fields**:
@@ -66,7 +66,7 @@ Domain can use DNSPod hosting access when meeting all of the following condition
 tccli cam CreateServiceLinkedRole \
   --QCSServiceName '["DnspodaccesEO.TEO.cloud.tencent.com"]' \
   --Description "This role is a service-linked role for Tencent EdgeOne Platform (TEO). This role will query your domain status and related DNS records in DNSPod within the permission scope of associated policies, and help you quickly complete DNS modification to switch acceleration service to EO in one-click DNS modification scenarios" \
-  --request-client "tencent-edgeone-skill/<version> module/api"
+  --request-client "tencent-edgeone-skill/1.1.0 module/api"
 ```
 
 **Response Example**:
