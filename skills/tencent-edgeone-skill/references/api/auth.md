@@ -5,7 +5,7 @@
 First, run the following command to verify the current login status:
 
 ```sh
-tccli cvm DescribeRegions
+tccli cvm DescribeRegions --request-client "tencent-edgeone-skill/1.1.0 module/api" 2>&1; echo "EXIT_CODE:$?"
 ```
 
 - If a normal result is returned, you are already logged in — no need to log in again.

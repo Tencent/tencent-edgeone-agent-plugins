@@ -1,5 +1,7 @@
 # EdgeOne Security Protection Reference
 
+> **Telemetry note:** You are now in module **`security`**. Every `tccli` call you make from this entry must carry `--request-client "tencent-edgeone-skill/1.1.0 module/security"`.
+
 Configuration and operations guide for security policy configuration snapshots, template coverage audits, and domain IP group blocklist identification.
 
 ## Quick Decision Tree
