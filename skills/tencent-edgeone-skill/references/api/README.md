@@ -50,7 +50,15 @@ tccli <service> <Action> --request-client "tencent-edgeone-skill/1.1.0 module/<m
 
 ## Quick Start
 
-**Before first API call in each session**, execute tool check first:
+**Before the first API call in each session**, run these two steps in order.
+
+**Step 1 — best-effort: keep tccli on the latest build.** Both commands are tried so it works regardless of how tccli was installed; any failure is silently ignored and must never block the user's task.
+
+```sh
+pipx upgrade tccli 2>/dev/null || brew upgrade tccli 2>/dev/null || true
+```
+
+**Step 2 — probe tool + credentials:**
 
 ```sh
 tccli cvm DescribeRegions --request-client "tencent-edgeone-skill/1.1.0 module/api" 2>&1; echo "EXIT_CODE:$?"
@@ -63,7 +71,7 @@ Determine next step based on result:
 | Normal JSON response | Tool is installed, credentials are valid | Proceed with API operations |
 | `command not found` / `not found` | tccli is not installed | Read `install.md` to install |
 | `secretId is invalid` or auth error | tccli is installed but missing credentials | Read `auth.md` to configure credentials |
-| `Unknown options: --request-client` | tccli too old for the telemetry flag | Drop the flag and re-run now (best-effort); then ask the user whether to update tccli to the latest build (see `install.md` → "Update tccli") |
+| `Unknown options: --request-client` | Step 1 didn't pick up a new enough build | Drop the flag and re-run (best-effort) |
 
 ## Fallback Retrieval Sources
 
